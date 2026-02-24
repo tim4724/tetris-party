@@ -9,6 +9,7 @@ let playerOrder = [];    // ordered player IDs for layout
 let boardRenderers = [];
 let uiRenderers = [];
 let animations = null;
+let music = null;
 let selectedMode = MODE.COMPETITIVE;
 let canvas = null;
 let ctx = null;
@@ -209,7 +210,8 @@ function onCountdown(msg) {
   countdownOverlay.offsetHeight; // force reflow
   countdownOverlay.style.animation = '';
 
-  if (msg.value === 0 || msg.value === 'GO') {
+  if (msg.value === 'GO') {
+    if (music && !music.playing) music.start();
     setTimeout(() => {
       countdownOverlay.classList.add('hidden');
       countdownOverlay.textContent = '';
@@ -232,6 +234,12 @@ function onGameState(msg) {
   // Recalculate layout if renderers don't match player count
   if (msg.players && boardRenderers.length !== msg.players.length) {
     calculateLayout();
+  }
+
+  // Speed up music with the highest player level
+  if (music && music.playing && msg.players && msg.players.length > 0) {
+    const maxLevel = Math.max(...msg.players.map(p => p.level || 1));
+    music.setSpeed(maxLevel);
   }
 }
 
@@ -281,6 +289,7 @@ function onPlayerKO(msg) {
 }
 
 function onGameEnd(msg) {
+  if (music) music.stop();
   showScreen('results');
   renderResults(msg.results);
 }
@@ -326,6 +335,11 @@ document.querySelectorAll('.mode-btn').forEach(btn => {
 // Start button
 startBtn.addEventListener('click', () => {
   if (startBtn.disabled) return;
+  // Init music on user gesture to satisfy browser autoplay policy
+  if (!music) {
+    music = new Music();
+  }
+  music.init();
   const settings = {};
   if (selectedMode === MODE.RACE) {
     settings.lineGoal = 40;
@@ -368,6 +382,7 @@ function renderResults(results) {
 
 // Back to lobby
 lobbyBtn.addEventListener('click', () => {
+  if (music) music.stop();
   send(MSG.RETURN_TO_LOBBY);
   gameState = null;
   boardRenderers = [];
