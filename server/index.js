@@ -36,10 +36,18 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // Redirect bare paths to trailing slash so relative URLs resolve correctly
+  if (urlPath === '/display' || urlPath === '/controller') {
+    const qs = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+    res.writeHead(301, { Location: urlPath + '/' + qs });
+    res.end();
+    return;
+  }
+
   // Map directory paths to index.html
-  if (urlPath === '/' || urlPath === '/display' || urlPath === '/display/') {
+  if (urlPath === '/' || urlPath === '/display/') {
     urlPath = '/display/index.html';
-  } else if (urlPath === '/controller' || urlPath === '/controller/') {
+  } else if (urlPath === '/controller/') {
     urlPath = '/controller/index.html';
   }
 
