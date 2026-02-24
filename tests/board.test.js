@@ -3,7 +3,7 @@
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const { PlayerBoard } = require('../server/PlayerBoard');
-const { BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ROWS } = require('../server/constants');
+const { BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ROWS, LINE_CLEAR_DELAY_MS } = require('../server/constants');
 
 function makeBoard() {
   return new PlayerBoard('test-player');
@@ -45,10 +45,19 @@ describe('PlayerBoard - spawnPiece()', () => {
     assert.strictEqual(board.currentPiece.x, 3);
   });
 
-  test('spawned piece y is at top of buffer zone (y=0)', () => {
+  test('spawned piece is pre-dropped near visible area (y = BUFFER_ROWS - 1)', () => {
     const board = makeBoard();
     board.spawnPiece();
-    assert.strictEqual(board.currentPiece.y, 0);
+    // Piece should be pre-dropped to y = 3 (BUFFER_ROWS - 1) on empty board
+    assert.strictEqual(board.currentPiece.y, BUFFER_ROWS - 1);
+  });
+
+  test('spawned piece is partly visible (at least one block in visible zone)', () => {
+    const board = makeBoard();
+    board.spawnPiece();
+    const blocks = board.currentPiece.getAbsoluteBlocks();
+    const hasVisibleBlock = blocks.some(([col, row]) => row >= BUFFER_ROWS);
+    assert.ok(hasVisibleBlock, 'At least one block should be in the visible zone');
   });
 
   test('spawnPiece() resets holdUsed to false', () => {
@@ -56,6 +65,25 @@ describe('PlayerBoard - spawnPiece()', () => {
     board.holdUsed = true;
     board.spawnPiece();
     assert.strictEqual(board.holdUsed, false);
+  });
+
+  test('spawnPiece() resets gravityCounter to 0', () => {
+    const board = makeBoard();
+    board.gravityCounter = 100;
+    board.spawnPiece();
+    assert.strictEqual(board.gravityCounter, 0);
+  });
+
+  test('pre-drop stops when blocked by existing pieces', () => {
+    const board = makeBoard();
+    const { Piece } = require('../server/Piece');
+    // Place a blocking row at row 2
+    board.grid[2] = new Array(BOARD_WIDTH).fill(1);
+    board.currentPiece = null;
+    board.spawnPiece();
+    // Piece should stop before row 2 (can't drop to BUFFER_ROWS - 1)
+    assert.ok(board.currentPiece.y < BUFFER_ROWS - 1,
+      'Piece should stop pre-drop when blocked');
   });
 });
 
@@ -205,6 +233,7 @@ describe('PlayerBoard - hardDrop()', () => {
     assert.ok(result !== null, 'hardDrop should return a result');
     assert.ok('linesCleared' in result);
     assert.ok('alive' in result);
+    assert.ok('fullRows' in result, 'result should include fullRows array');
   });
 
   test('hardDrop() returns null when no currentPiece', () => {
@@ -228,11 +257,10 @@ describe('PlayerBoard - hardDrop()', () => {
 });
 
 describe('PlayerBoard - line clear', () => {
-  test('filling a row and hard dropping removes it', () => {
+  test('filling a row and calling clearLines removes it', () => {
     const board = makeBoard();
-    const { Piece } = require('../server/Piece');
 
-    // Fill the bottom row leaving one column empty
+    // Fill the bottom row completely
     const bottomRow = BOARD_HEIGHT - 1;
     board.grid[bottomRow] = new Array(BOARD_WIDTH).fill(1);
     // Fill second-to-bottom row leaving just col 0 open
@@ -278,6 +306,131 @@ describe('PlayerBoard - line clear', () => {
 
     board.clearLines();
     assert.strictEqual(board.grid.length, BOARD_HEIGHT);
+  });
+});
+
+describe('PlayerBoard - line clear delay', () => {
+  test('hardDrop with full rows starts clearing state', () => {
+    const board = makeBoard();
+    const { Piece } = require('../server/Piece');
+
+    // Fill bottom row completely
+    board.grid[BOARD_HEIGHT - 1] = new Array(BOARD_WIDTH).fill(1);
+    // Leave a gap in one column for the I piece to not clear more
+    board.grid[BOARD_HEIGHT - 2] = new Array(BOARD_WIDTH).fill(0);
+
+    // Place I piece horizontally across bottom-2 row
+    board.currentPiece = new Piece('I');
+    board.currentPiece.x = 0;
+    board.currentPiece.y = BOARD_HEIGHT - 3; // I-piece rotation 0, blocks at row 1 => absolute row BOARD_HEIGHT-2
+
+    const result = board.hardDrop();
+    assert.ok(result.linesCleared > 0, 'Should detect line clears');
+    assert.ok(board.clearingRows !== null, 'Should have clearing rows set');
+    assert.ok(board.currentPiece === null, 'No current piece during clearing');
+  });
+
+  test('tick returns null during clearing delay', () => {
+    const board = makeBoard();
+    // Simulate clearing state
+    board.clearingRows = [BOARD_HEIGHT - 1];
+    board.clearingStartTime = Date.now();
+
+    const result = board.tick(16);
+    assert.strictEqual(result, null, 'tick should return null during clearing');
+  });
+
+  test('_finishClearLines removes rows and spawns new piece', () => {
+    const board = makeBoard();
+
+    // Fill bottom 2 rows
+    board.grid[BOARD_HEIGHT - 1] = new Array(BOARD_WIDTH).fill(1);
+    board.grid[BOARD_HEIGHT - 2] = new Array(BOARD_WIDTH).fill(1);
+
+    // Set up clearing state (rows in ascending order, as _lockAndProcess produces)
+    board.clearingRows = [BOARD_HEIGHT - 2, BOARD_HEIGHT - 1];
+    board.clearingStartTime = Date.now() - LINE_CLEAR_DELAY_MS - 1;
+
+    board._finishClearLines();
+
+    assert.strictEqual(board.clearingRows, null, 'Clearing rows should be null after finish');
+    assert.ok(board.currentPiece !== null, 'New piece should be spawned');
+    assert.strictEqual(board.grid.length, BOARD_HEIGHT, 'Board height should be preserved');
+    // Bottom rows should now be empty (cleared rows replaced with empty at top)
+    assert.ok(board.grid[0].every(c => c === 0), 'Top row should be empty');
+    assert.ok(board.grid[1].every(c => c === 0), 'Second row should be empty');
+  });
+
+  test('tick finishes clearing after delay expires', () => {
+    const board = makeBoard();
+
+    // Fill bottom row
+    board.grid[BOARD_HEIGHT - 1] = new Array(BOARD_WIDTH).fill(1);
+
+    // Set up clearing state that has expired
+    board.clearingRows = [BOARD_HEIGHT - 1];
+    board.clearingStartTime = Date.now() - LINE_CLEAR_DELAY_MS - 10;
+
+    board.tick(16);
+
+    assert.strictEqual(board.clearingRows, null, 'Clearing should be finished');
+    assert.ok(board.currentPiece !== null, 'New piece should be spawned after clearing');
+  });
+
+  test('getState includes clearingRows for display', () => {
+    const board = makeBoard();
+    board.spawnPiece();
+
+    // No clearing
+    let state = board.getState();
+    assert.strictEqual(state.clearingRows, null);
+
+    // Set clearing state (ascending order)
+    board.clearingRows = [BOARD_HEIGHT - 2, BOARD_HEIGHT - 1];
+    state = board.getState();
+    assert.deepStrictEqual(state.clearingRows, [
+      BOARD_HEIGHT - 2 - BUFFER_ROWS,
+      BOARD_HEIGHT - 1 - BUFFER_ROWS
+    ]);
+  });
+
+  test('hardDrop without line clears spawns immediately', () => {
+    const board = makeBoard();
+    const { Piece } = require('../server/Piece');
+
+    board.currentPiece = new Piece('O');
+    board.currentPiece.x = 4;
+    board.currentPiece.y = 0;
+
+    const result = board.hardDrop();
+    assert.strictEqual(result.linesCleared, 0);
+    assert.strictEqual(board.clearingRows, null, 'No clearing state when no lines cleared');
+    assert.ok(board.currentPiece !== null, 'New piece should spawn immediately');
+  });
+});
+
+describe('PlayerBoard - soft drop', () => {
+  test('softDropStart resets gravityCounter', () => {
+    const board = makeBoard();
+    board.gravityCounter = 40;
+    board.softDropStart();
+    assert.strictEqual(board.gravityCounter, 0, 'gravityCounter should reset on soft drop start');
+    assert.strictEqual(board.softDropping, true);
+  });
+
+  test('softDropStart does not reset gravityCounter if already soft dropping', () => {
+    const board = makeBoard();
+    board.softDropping = true;
+    board.gravityCounter = 10;
+    board.softDropStart();
+    assert.strictEqual(board.gravityCounter, 10, 'gravityCounter should not reset when already soft dropping');
+  });
+
+  test('softDropEnd stops soft dropping', () => {
+    const board = makeBoard();
+    board.softDropping = true;
+    board.softDropEnd();
+    assert.strictEqual(board.softDropping, false);
   });
 });
 

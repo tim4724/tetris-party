@@ -3,7 +3,8 @@
 const {
   BOARD_WIDTH, BOARD_HEIGHT, VISIBLE_HEIGHT, BUFFER_ROWS,
   GRAVITY_TABLE, SOFT_DROP_MULTIPLIER,
-  LOCK_DELAY_MS, MAX_LOCK_RESETS, GARBAGE_CELL
+  LOCK_DELAY_MS, MAX_LOCK_RESETS, GARBAGE_CELL,
+  LINE_CLEAR_DELAY_MS, MAX_DROPS_PER_TICK
 } = require('./constants');
 const { Piece } = require('./Piece');
 const { Randomizer } = require('./Randomizer');
@@ -32,6 +33,10 @@ class PlayerBoard {
     this.lastWasTSpinMini = false;
     this.lastWasRotation = false;
 
+    // Line clear animation state
+    this.clearingRows = null;
+    this.clearingStartTime = null;
+
     // Fill the next queue
     this._fillNextQueue();
   }
@@ -56,7 +61,26 @@ class PlayerBoard {
       this.alive = false;
       return false;
     }
+
+    this._preDropToVisible();
     return true;
+  }
+
+  // Pre-drop piece to the edge of the visible area so it appears immediately.
+  _preDropToVisible() {
+    if (!this.currentPiece) return;
+    const targetY = BUFFER_ROWS - 1;
+    while (this.currentPiece.y < targetY) {
+      const test = this.currentPiece.clone();
+      test.y += 1;
+      if (this.isValidPosition(test)) {
+        this.currentPiece.y = test.y;
+      } else {
+        break;
+      }
+    }
+    // Reset gravity counter for fresh timing
+    this.gravityCounter = 0;
   }
 
   moveLeft() {
@@ -181,6 +205,10 @@ class PlayerBoard {
   }
 
   softDropStart() {
+    if (!this.softDropping) {
+      // Reset gravity counter to prevent teleporting from accumulated gravity
+      this.gravityCounter = 0;
+    }
     this.softDropping = true;
   }
 
@@ -228,11 +256,22 @@ class PlayerBoard {
       this.alive = false;
       return false;
     }
+    this._preDropToVisible();
     return true;
   }
 
   tick(deltaMs) {
-    if (!this.alive || !this.currentPiece) return null;
+    if (!this.alive) return null;
+
+    // Handle line clear animation delay
+    if (this.clearingRows) {
+      if ((Date.now() - this.clearingStartTime) >= LINE_CLEAR_DELAY_MS) {
+        this._finishClearLines();
+      }
+      return null;
+    }
+
+    if (!this.currentPiece) return null;
 
     const level = this.scoring.getLevel();
     const gravityIndex = Math.min(level - 1, GRAVITY_TABLE.length - 1);
@@ -247,10 +286,12 @@ class PlayerBoard {
     const frames = deltaMs / (1000 / 60);
     this.gravityCounter += frames;
 
-    // Apply gravity
+    // Apply gravity with safety cap to prevent teleporting
     let softDropCells = 0;
-    while (this.gravityCounter >= gravityFrames) {
+    let dropsThisTick = 0;
+    while (this.gravityCounter >= gravityFrames && dropsThisTick < MAX_DROPS_PER_TICK) {
       this.gravityCounter -= gravityFrames;
+      dropsThisTick++;
       const test = this.currentPiece.clone();
       test.y += 1;
       if (this.isValidPosition(test)) {
@@ -276,6 +317,11 @@ class PlayerBoard {
       }
     }
 
+    // Reset excess accumulation if cap was hit
+    if (dropsThisTick >= MAX_DROPS_PER_TICK) {
+      this.gravityCounter = 0;
+    }
+
     if (softDropCells > 0) {
       this.scoring.addSoftDrop(softDropCells);
     }
@@ -290,17 +336,63 @@ class PlayerBoard {
 
   _lockAndProcess() {
     this.lockPiece();
-    const clearResult = this.clearLines();
-    this._applyPendingGarbage();
-    const spawnOk = this.spawnPiece();
+
+    const isTSpin = this.lastWasTSpin && this.lastWasRotation;
+    const isTSpinMini = this.lastWasTSpinMini && this.lastWasRotation;
+
+    // Detect full rows
+    const fullRows = [];
+    for (let row = 0; row < BOARD_HEIGHT; row++) {
+      if (this.grid[row].every(cell => cell !== 0)) {
+        fullRows.push(row);
+      }
+    }
+
+    const linesCleared = fullRows.length;
+    let scoreResult = null;
+
+    if (linesCleared > 0) {
+      // Calculate score immediately
+      scoreResult = this.scoring.addLineClear(linesCleared, isTSpin, isTSpinMini);
+
+      // Start clearing animation - delay actual row removal
+      this.clearingRows = fullRows;
+      this.clearingStartTime = Date.now();
+      this.currentPiece = null;
+    } else {
+      // No lines cleared - reset combo and proceed immediately
+      this.scoring.combo = -1;
+      this._applyPendingGarbage();
+      this.spawnPiece();
+    }
 
     return {
-      linesCleared: clearResult.linesCleared,
-      isTSpin: clearResult.isTSpin,
-      isTSpinMini: clearResult.isTSpinMini,
-      scoreResult: clearResult.scoreResult,
+      linesCleared,
+      fullRows: fullRows.map(r => r - BUFFER_ROWS),
+      isTSpin,
+      isTSpinMini,
+      scoreResult,
       alive: this.alive
     };
+  }
+
+  _finishClearLines() {
+    if (!this.clearingRows) return;
+
+    // Remove the clearing rows from the grid
+    for (let i = this.clearingRows.length - 1; i >= 0; i--) {
+      this.grid.splice(this.clearingRows[i], 1);
+    }
+    // Add empty rows at top to maintain board height
+    for (let i = 0; i < this.clearingRows.length; i++) {
+      this.grid.unshift(new Array(BOARD_WIDTH).fill(0));
+    }
+
+    this.clearingRows = null;
+    this.clearingStartTime = null;
+
+    this._applyPendingGarbage();
+    this.spawnPiece();
   }
 
   lockPiece() {
@@ -413,7 +505,8 @@ class PlayerBoard {
       level: this.scoring.level,
       lines: this.scoring.lines,
       alive: this.alive,
-      pendingGarbage: this.pendingGarbage.reduce((sum, g) => sum + g.lines, 0)
+      pendingGarbage: this.pendingGarbage.reduce((sum, g) => sum + g.lines, 0),
+      clearingRows: this.clearingRows ? this.clearingRows.map(r => r - BUFFER_ROWS) : null
     };
   }
 }

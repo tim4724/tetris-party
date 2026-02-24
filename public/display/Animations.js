@@ -7,7 +7,10 @@ class Animations {
   }
 
   addLineClear(boardX, boardY, cellSize, rows, isTetris, isTSpin) {
-    const duration = 300;
+    // rows is an array of visible-row indices (0-19)
+    if (!Array.isArray(rows) || rows.length === 0) return;
+
+    const duration = 500;
     this.active.push({
       type: 'lineClear',
       startTime: performance.now(),
@@ -19,28 +22,49 @@ class Animations {
       isTetris,
       isTSpin,
       render(ctx, progress) {
-        const alpha = 1 - progress;
-        ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.8})`;
+        // Phase 1 (0-0.3): Bright flash
+        // Phase 2 (0.3-1.0): Fade out with scanline dissolve
         for (const row of this.rows) {
-          ctx.fillRect(
-            this.boardX,
-            this.boardY + row * this.cellSize,
-            10 * this.cellSize,
-            this.cellSize
-          );
+          if (row < 0) continue;
+          const ry = this.boardY + row * this.cellSize;
+          const rw = 10 * this.cellSize;
+          const rh = this.cellSize;
+
+          if (progress < 0.3) {
+            // Bright white flash
+            const flashAlpha = 0.9 * (1 - progress / 0.3);
+            ctx.fillStyle = `rgba(255, 255, 255, ${flashAlpha})`;
+            ctx.fillRect(this.boardX, ry, rw, rh);
+          } else {
+            // Scanline dissolve effect
+            const fadeProgress = (progress - 0.3) / 0.7;
+            const alpha = 0.6 * (1 - fadeProgress);
+            const stripeCount = 5;
+            const stripeH = rh / stripeCount;
+            for (let s = 0; s < stripeCount; s++) {
+              // Stagger the fade per stripe
+              const stripeAlpha = alpha * Math.max(0, 1 - (fadeProgress + s * 0.1));
+              if (stripeAlpha <= 0) continue;
+              ctx.fillStyle = this.isTetris
+                ? `rgba(0, 240, 240, ${stripeAlpha})`
+                : `rgba(255, 255, 255, ${stripeAlpha})`;
+              ctx.fillRect(this.boardX, ry + s * stripeH, rw, stripeH * 0.6);
+            }
+          }
         }
       }
     });
 
     // Text popup for special clears
-    if (isTetris) {
+    const firstRow = rows.find(r => r >= 0);
+    if (isTetris && firstRow != null) {
       const cx = boardX + 5 * cellSize;
-      const cy = boardY + rows[0] * cellSize;
+      const cy = boardY + firstRow * cellSize;
       this.addTextPopup(cx, cy, 'TETRIS!', '#00ffff');
     }
-    if (isTSpin) {
+    if (isTSpin && firstRow != null) {
       const cx = boardX + 5 * cellSize;
-      const cy = boardY + rows[0] * cellSize - cellSize;
+      const cy = boardY + firstRow * cellSize - cellSize;
       this.addTextPopup(cx, cy, 'T-SPIN!', '#a000f0');
     }
   }
