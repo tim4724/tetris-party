@@ -83,6 +83,9 @@ jobs:
                 containers:
                   - name: tetris
                     image: ${IMAGE}
+                    env:
+                      - name: PUBLIC_URL
+                        value: https://${HOST}
                     ports:
                       - containerPort: 4000
                         name: http

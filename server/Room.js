@@ -117,10 +117,9 @@ class Room {
     return true;
   }
 
-  async getQRDataUrl(serverHost) {
-    const url = `http://${serverHost}/controller/?room=${this.roomCode}`;
+  async getQRUrl(joinUrl) {
     try {
-      return await QRCode.toDataURL(url, { width: 256, margin: 1 });
+      return await QRCode.toDataURL(joinUrl, { width: 256, margin: 1 });
     } catch (err) {
       console.error('QR generation failed:', err);
       return null;

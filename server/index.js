@@ -9,6 +9,7 @@ const Room = require('./Room.js');
 const { MSG } = require('../public/shared/protocol.js');
 
 const PORT = parseInt(process.env.PORT, 10) || 4000;
+const PUBLIC_URL = process.env.PUBLIC_URL || ''; // e.g. https://main.tetris-party.duckdns.org
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 
 // --- MIME types ---
@@ -156,10 +157,14 @@ async function handleNewConnection(ws, msg) {
 
     clientInfo.set(ws, { roomCode, type: 'display' });
 
-    const localIP = getLocalIP();
-    const serverHost = `${localIP}:${PORT}`;
-    const qrDataUrl = await room.getQRDataUrl(serverHost);
-    const joinUrl = `http://${serverHost}/controller/?room=${roomCode}`;
+    let joinUrl;
+    if (PUBLIC_URL) {
+      joinUrl = `${PUBLIC_URL}/controller/?room=${roomCode}`;
+    } else {
+      const localIP = getLocalIP();
+      joinUrl = `http://${localIP}:${PORT}/controller/?room=${roomCode}`;
+    }
+    const qrDataUrl = await room.getQRUrl(joinUrl);
 
     send(ws, MSG.ROOM_CREATED, { roomCode, qrDataUrl, joinUrl });
     console.log(`Room ${roomCode} created. Join: ${joinUrl}`);
