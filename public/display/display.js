@@ -237,7 +237,7 @@ function onGameState(msg) {
   }
 
   // Speed up music with the highest player level
-  if (music && music.playing && msg.players) {
+  if (music && music.playing && msg.players && msg.players.length > 0) {
     const maxLevel = Math.max(...msg.players.map(p => p.level || 1));
     music.setSpeed(maxLevel);
   }

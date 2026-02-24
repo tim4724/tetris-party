@@ -16,9 +16,9 @@ class Music {
     this.masterGain = null;
     this.generation = 0;
 
-    // Note frequencies (Hz)
-    const E2 = 82.41, G_2 = 103.83, A2 = 110.00;
-    const C3 = 130.81, D3 = 146.83, E3 = 164.81, F3 = 174.61, G_3 = 207.65, A3 = 220.00;
+    // Note frequencies (Hz). Sharps use 's' suffix (e.g. Gs2 = G#2)
+    const E2 = 82.41, Gs2 = 103.83, A2 = 110.00;
+    const C3 = 130.81, D3 = 146.83, E3 = 164.81, F3 = 174.61, Gs3 = 207.65, A3 = 220.00;
     const A4 = 440.00, B4 = 493.88, C5 = 523.25, D5 = 587.33, E5 = 659.25, F5 = 698.46, G5 = 783.99, A5 = 880.00;
     const R = 0; // rest
 
@@ -53,7 +53,7 @@ class Music {
       // m2: Am
       [A2, 2], [A3, 2], [A2, 2], [A3, 2],
       // m3: G#dim -> Em
-      [G_2, 2], [G_3, 2], [E2, 2], [E3, 2],
+      [Gs2, 2], [Gs3, 2], [E2, 2], [E3, 2],
       // m4: Am
       [A2, 2], [A3, 2], [A2, 2], [R, 2],
       // m5: Dm -> F
@@ -61,7 +61,7 @@ class Music {
       // m6: C -> E
       [C3, 2], [C3, 2], [E3, 2], [E3, 2],
       // m7: G#dim -> Em
-      [G_2, 2], [G_3, 2], [E2, 2], [E3, 2],
+      [Gs2, 2], [Gs3, 2], [E2, 2], [E3, 2],
       // m8: Am
       [A2, 2], [A3, 2], [A2, 2], [R, 2],
     ];
@@ -87,7 +87,13 @@ class Music {
   start() {
     this.init();
     if (this.ctx.state === 'suspended') {
-      this.ctx.resume();
+      this.ctx.resume().catch(e => console.warn('AudioContext resume failed:', e));
+    }
+
+    // Cancel any existing scheduler before starting a new one
+    if (this.scheduleTimer) {
+      clearTimeout(this.scheduleTimer);
+      this.scheduleTimer = null;
     }
 
     this.generation++;
@@ -184,13 +190,14 @@ class Music {
 
     this.scheduledSources.push(osc);
     osc.onended = () => {
+      noteGain.disconnect();
       const idx = this.scheduledSources.indexOf(osc);
       if (idx > -1) this.scheduledSources.splice(idx, 1);
     };
   }
 
   setSpeed(level) {
-    this.bpm = 150 + (level - 1) * 3;
+    this.bpm = Math.min(240, 150 + (level - 1) * 3);
   }
 }
 
