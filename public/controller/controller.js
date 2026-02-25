@@ -72,11 +72,6 @@
     document.removeEventListener('touchstart', onFirstTouch, true);
   }, { capture: true, passive: true });
 
-  // When the waiting screen is tapped, prime vibration.
-  waitingScreen.addEventListener('touchstart', function () {
-    primeVibration();
-  }, { passive: true });
-
   // WebSocket connection
   function connect() {
     const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';

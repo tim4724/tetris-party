@@ -408,6 +408,45 @@ describe('PlayerBoard - line clear delay', () => {
   });
 });
 
+describe('PlayerBoard - T-spin zero scoring', () => {
+  test('T-spin with no lines cleared still scores points', () => {
+    const board = makeBoard();
+    const { Piece } = require('../server/Piece');
+
+    board.currentPiece = new Piece('T');
+    board.currentPiece.x = 4;
+    board.currentPiece.y = BOARD_HEIGHT - 3;
+    board.lastWasTSpin = true;
+    board.lastWasRotation = true;
+
+    const initialScore = board.scoring.score;
+    const result = board.hardDrop();
+
+    assert.strictEqual(result.linesCleared, 0);
+    assert.strictEqual(result.isTSpin, true);
+    assert.ok(result.scoreResult !== null, 'T-spin zero should produce a score result');
+    assert.ok(board.scoring.score > initialScore, 'Score should increase for T-spin zero');
+  });
+
+  test('T-spin mini with no lines cleared scores points', () => {
+    const board = makeBoard();
+    const { Piece } = require('../server/Piece');
+
+    board.currentPiece = new Piece('T');
+    board.currentPiece.x = 4;
+    board.currentPiece.y = BOARD_HEIGHT - 3;
+    board.lastWasTSpinMini = true;
+    board.lastWasRotation = true;
+
+    const initialScore = board.scoring.score;
+    const result = board.hardDrop();
+
+    assert.strictEqual(result.linesCleared, 0);
+    assert.ok(result.scoreResult !== null, 'T-spin mini zero should produce a score result');
+    assert.ok(board.scoring.score > initialScore, 'Score should increase for T-spin mini zero');
+  });
+});
+
 describe('PlayerBoard - soft drop', () => {
   test('softDropStart resets gravityCounter', () => {
     const board = makeBoard();

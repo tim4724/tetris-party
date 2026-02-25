@@ -365,7 +365,10 @@ class PlayerBoard {
       this.clearingStartTime = Date.now();
       this.currentPiece = null;
     } else {
-      // No lines cleared - reset combo and proceed immediately
+      // T-spin zero still scores points even with no lines cleared
+      if (isTSpin || isTSpinMini) {
+        scoreResult = this.scoring.addLineClear(0, isTSpin, isTSpinMini);
+      }
       this.scoring.resetCombo();
       this._applyPendingGarbage();
       this.spawnPiece();
