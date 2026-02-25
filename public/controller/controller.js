@@ -194,28 +194,7 @@
     removeCountdownOverlay();
     showScreen('game');
 
-    if (vibrationPrimed) {
-      initTouchInput();
-    } else {
-      // Vibration API not yet primed — show a brief "TAP" gate so the
-      // user's first touch primes the API before TouchInput starts.
-      showTapGate();
-    }
-  }
-
-  function showTapGate() {
-    var gate = document.createElement('div');
-    gate.className = 'countdown-overlay go';
-    gate.textContent = 'TAP!';
-    gate.style.pointerEvents = 'auto';
-    gameScreen.appendChild(gate);
-
-    gate.addEventListener('touchstart', function onTap() {
-      primeVibration();
-      gate.removeEventListener('touchstart', onTap);
-      gate.remove();
-      initTouchInput();
-    }, { passive: true });
+    initTouchInput();
   }
 
   function onCountdown(data) {
