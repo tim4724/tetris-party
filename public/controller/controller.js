@@ -48,6 +48,30 @@
 
   statusDetail.textContent = 'Room: ' + roomCode;
 
+  function vibrate(pattern) {
+    if (!navigator.vibrate) return;
+    navigator.vibrate(pattern);
+  }
+
+  // Prime the Vibration API.  On Android Chrome the first-ever vibrate()
+  // call in a page silently fails; vibration only works starting from the
+  // *next* user gesture.  We therefore need at least one completed touch
+  // interaction that calls vibrate() BEFORE the game's first gesture.
+  // The waiting screen prompts the user to tap, which primes the API.
+  let vibrationPrimed = false;
+
+  function primeVibration() {
+    if (vibrationPrimed) return;
+    vibrationPrimed = true;
+    vibrate(1);
+  }
+
+  // Capture-phase listener so it fires before any other touch handler.
+  document.addEventListener('touchstart', function onFirstTouch() {
+    primeVibration();
+    document.removeEventListener('touchstart', onFirstTouch, true);
+  }, { capture: true, passive: true });
+
   // WebSocket connection
   function connect() {
     const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -55,6 +79,8 @@
 
     ws.onopen = function () {
       reconnectAttempts = 0;
+      // Best-effort "connected" haptic feedback.
+      vibrate(10);
       const token = sessionStorage.getItem('reconnectToken_' + roomCode);
       if (token) {
         send(MSG.REJOIN, { roomCode: roomCode, reconnectToken: token });
@@ -153,6 +179,8 @@
   }
 
   function onGameStart() {
+    // Best-effort start signal for mobile controllers.
+    vibrate([15, 25, 20]);
     inputSeq = 0;
     scoreDisplay.textContent = '0';
     garbageBar.innerHTML = '';
@@ -160,6 +188,7 @@
     hintHidden = false;
     removeCountdownOverlay();
     showScreen('game');
+
     initTouchInput();
   }
 

@@ -249,9 +249,10 @@ function onLineClear(msg) {
   if (idx < 0 || !boardRenderers[idx]) return;
 
   const br = boardRenderers[idx];
+  const isTetris = msg.lines === 4;
   animations.addLineClear(
     br.x, br.y, br.cellSize,
-    msg.lines, msg.isTetris, msg.isTSpin
+    msg.rows || [], isTetris, msg.isTSpin
   );
 
   if (msg.combo >= 2) {
@@ -259,13 +260,6 @@ function onLineClear(msg) {
       br.x + br.boardWidth / 2,
       br.y + br.boardHeight / 2 - 30,
       msg.combo
-    );
-  }
-
-  if (msg.backToBack) {
-    animations.addBackToBack(
-      br.x + br.boardWidth / 2,
-      br.y + br.boardHeight / 2 + 20
     );
   }
 }

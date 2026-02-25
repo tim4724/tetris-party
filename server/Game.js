@@ -159,7 +159,9 @@ class Game {
       type: 'line_clear',
       playerId,
       lines,
-      isTSpin
+      rows: clearResult.fullRows || [],
+      isTSpin,
+      combo
     });
 
     if (this.garbageManager && this.mode === MODE.COMPETITIVE) {

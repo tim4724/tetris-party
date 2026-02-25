@@ -16,6 +16,8 @@ const GRAVITY_TABLE = [
 const SOFT_DROP_MULTIPLIER = 20;
 const LOCK_DELAY_MS = 500;
 const MAX_LOCK_RESETS = 15;
+const LINE_CLEAR_DELAY_MS = 400; // Delay before cleared rows are removed (< client animation 500ms for graceful fade)
+const MAX_DROPS_PER_TICK = 5;    // Safety cap to prevent teleporting
 
 // Timing
 const LOGIC_TICK_MS = 1000 / 60;    // 60Hz game logic
@@ -78,6 +80,7 @@ const GARBAGE_CELL = 8;
 module.exports = {
   BOARD_WIDTH, BOARD_HEIGHT, VISIBLE_HEIGHT, BUFFER_ROWS,
   GRAVITY_TABLE, SOFT_DROP_MULTIPLIER, LOCK_DELAY_MS, MAX_LOCK_RESETS,
+  LINE_CLEAR_DELAY_MS, MAX_DROPS_PER_TICK,
   LOGIC_TICK_MS, BROADCAST_TICK_MS,
   LINE_CLEAR_SCORES, TSPIN_SCORES, TSPIN_MINI_SCORES,
   COMBO_TABLE, BACK_TO_BACK_MULTIPLIER,

@@ -81,9 +81,8 @@ class TouchInput {
   }
 
   _haptic(pattern) {
-    if (navigator.vibrate) {
-      navigator.vibrate(pattern);
-    }
+    if (!navigator.vibrate) return;
+    navigator.vibrate(pattern);
   }
 
   _calcSoftDropSpeed(distY) {
@@ -174,6 +173,7 @@ class TouchInput {
         const speed = this._calcSoftDropSpeed(distDown);
         if (!this.isSoftDropping) {
           this.isSoftDropping = true;
+          this._haptic(15);
           this.onInput('soft_drop_start', { speed });
         } else {
           // Update speed as finger moves further

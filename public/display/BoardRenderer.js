@@ -85,7 +85,20 @@ class BoardRenderer {
       }
     }
 
-    // 6. Board border with player accent color
+    // 6. Clearing rows pulsing glow effect
+    if (playerState.clearingRows && playerState.clearingRows.length > 0) {
+      const t = performance.now() / 200;
+      for (const row of playerState.clearingRows) {
+        if (row >= 0 && row < VISIBLE_ROWS) {
+          // Pulsing white glow
+          const alpha = 0.35 + 0.25 * Math.sin(t * Math.PI);
+          ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+          ctx.fillRect(this.x, this.y + row * this.cellSize, this.boardWidth, this.cellSize);
+        }
+      }
+    }
+
+    // 7. Board border with player accent color
     ctx.strokeStyle = this.accentColor;
     ctx.lineWidth = 2;
     ctx.strokeRect(this.x - 1, this.y - 1, this.boardWidth + 2, this.boardHeight + 2);
