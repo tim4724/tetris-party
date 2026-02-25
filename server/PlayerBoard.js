@@ -28,6 +28,7 @@ class PlayerBoard {
     this.lockResets = 0;
     this.gravityCounter = 0;
     this.softDropping = false;
+    this.softDropSpeed = SOFT_DROP_MULTIPLIER;
     this.pendingGarbage = [];
     this.lastWasTSpin = false;
     this.lastWasTSpinMini = false;
@@ -204,16 +205,20 @@ class PlayerBoard {
     return !this.isValidPosition(test);
   }
 
-  softDropStart() {
+  softDropStart(speed) {
     if (!this.softDropping) {
       // Reset gravity counter to prevent teleporting from accumulated gravity
       this.gravityCounter = 0;
     }
     this.softDropping = true;
+    if (speed != null) {
+      this.softDropSpeed = speed;
+    }
   }
 
   softDropEnd() {
     this.softDropping = false;
+    this.softDropSpeed = SOFT_DROP_MULTIPLIER;
   }
 
   hardDrop() {
@@ -279,7 +284,7 @@ class PlayerBoard {
 
     // Soft drop accelerates gravity
     if (this.softDropping) {
-      gravityFrames = Math.max(1, Math.floor(gravityFrames / SOFT_DROP_MULTIPLIER));
+      gravityFrames = Math.max(1, Math.floor(gravityFrames / this.softDropSpeed));
     }
 
     // Convert deltaMs to frames (60fps)

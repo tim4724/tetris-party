@@ -87,7 +87,7 @@ class BoardRenderer {
 
     // 6. Clearing rows pulsing glow effect
     if (playerState.clearingRows && playerState.clearingRows.length > 0) {
-      const t = performance.now() / 80;
+      const t = performance.now() / 200;
       for (const row of playerState.clearingRows) {
         if (row >= 0 && row < VISIBLE_ROWS) {
           // Pulsing white glow

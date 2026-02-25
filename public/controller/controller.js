@@ -50,11 +50,7 @@
 
   function vibrate(pattern) {
     if (!navigator.vibrate) return;
-    try {
-      navigator.vibrate(pattern);
-    } catch (_) {
-      // Ignore vibration errors on unsupported browsers/devices.
-    }
+    navigator.vibrate(pattern);
   }
 
   // Prime the Vibration API.  On Android Chrome the first-ever vibrate()
