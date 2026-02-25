@@ -57,14 +57,33 @@
     }
   }
 
-  // Prime the Vibration API on the very first user touch.  Mobile browsers
-  // require navigator.vibrate() to be called inside a user-gesture event
-  // handler before it will produce output.  A tiny 1 ms vibration during the
-  // waiting/countdown screen is imperceptible but unlocks the API so that
-  // haptic feedback works immediately once the game starts.
-  document.addEventListener('touchstart', function primeVibration() {
+  // Prime the Vibration API.  On Android Chrome the first-ever vibrate()
+  // call in a page silently fails; vibration only works starting from the
+  // *next* user gesture.  We therefore need at least one completed touch
+  // interaction that calls vibrate() BEFORE the game's first gesture.
+  // The waiting screen prompts the user to tap, which primes the API.
+  let vibrationPrimed = false;
+
+  function primeVibration() {
+    if (vibrationPrimed) return;
+    vibrationPrimed = true;
     vibrate(1);
-    document.removeEventListener('touchstart', primeVibration);
+  }
+
+  // Capture-phase listener so it fires before any other touch handler.
+  document.addEventListener('touchstart', function onFirstTouch() {
+    primeVibration();
+    document.removeEventListener('touchstart', onFirstTouch, true);
+  }, { capture: true, passive: true });
+
+  // When the waiting screen is tapped, prime vibration and update text.
+  waitingScreen.addEventListener('touchstart', function () {
+    if (!vibrationPrimed) {
+      primeVibration();
+      if (playerId) {
+        statusDetail.textContent = 'Waiting for game to start...';
+      }
+    }
   }, { passive: true });
 
   // WebSocket connection
@@ -169,7 +188,11 @@
     playerIndicator.style.background = playerColor;
 
     statusText.textContent = 'Joined!';
-    statusDetail.textContent = 'Waiting for game to start...';
+    if (vibrationPrimed) {
+      statusDetail.textContent = 'Waiting for game to start...';
+    } else {
+      statusDetail.textContent = 'Tap anywhere to enable vibration';
+    }
     showScreen('waiting');
   }
 
