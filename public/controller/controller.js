@@ -76,14 +76,9 @@
     document.removeEventListener('touchstart', onFirstTouch, true);
   }, { capture: true, passive: true });
 
-  // When the waiting screen is tapped, prime vibration and update text.
+  // When the waiting screen is tapped, prime vibration.
   waitingScreen.addEventListener('touchstart', function () {
-    if (!vibrationPrimed) {
-      primeVibration();
-      if (playerId) {
-        statusDetail.textContent = 'Waiting for game to start...';
-      }
-    }
+    primeVibration();
   }, { passive: true });
 
   // WebSocket connection
@@ -188,11 +183,7 @@
     playerIndicator.style.background = playerColor;
 
     statusText.textContent = 'Joined!';
-    if (vibrationPrimed) {
-      statusDetail.textContent = 'Waiting for game to start...';
-    } else {
-      statusDetail.textContent = 'Tap anywhere to enable vibration';
-    }
+    statusDetail.textContent = 'Waiting for game to start...';
     showScreen('waiting');
   }
 
