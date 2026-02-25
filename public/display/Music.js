@@ -13,8 +13,10 @@ class Music {
     this.scheduleTimer = null;
     this.melodyGain = null;
     this.bassGain = null;
+    this.octaveGain = null;
     this.masterGain = null;
     this.generation = 0;
+    this.passCount = 0;
 
     // Note frequencies (Hz). Sharps use 's' suffix (e.g. Gs2 = G#2)
     const E2 = 82.41, Gs2 = 103.83, A2 = 110.00;
@@ -22,8 +24,8 @@ class Music {
     const A4 = 440.00, B4 = 493.88, C5 = 523.25, D5 = 587.33, E5 = 659.25, F5 = 698.46, G5 = 783.99, A5 = 880.00;
     const R = 0; // rest
 
-    // Melody: [frequency, duration in eighth notes]
     // Korobeiniki Theme A — two phrases, 8 measures total
+    // [frequency, duration in eighth notes]
     this.melody = [
       // Phrase 1
       // m1: E5(q) B4(8) C5(8) D5(q) C5(8) B4(8)
@@ -45,8 +47,7 @@ class Music {
       [C5, 2], [A4, 2], [A4, 2], [R, 2],
     ];
 
-    // Bass line: [frequency, duration in eighth notes]
-    // Octave bounce pattern following chord roots
+    // Bass line: octave bounce pattern following chord roots
     this.bass = [
       // m1: Em
       [E2, 2], [E3, 2], [E2, 2], [E3, 2],
@@ -80,8 +81,13 @@ class Music {
     this.melodyGain.connect(this.masterGain);
 
     this.bassGain = this.ctx.createGain();
-    this.bassGain.gain.value = 0.35;
+    this.bassGain.gain.value = 0;
     this.bassGain.connect(this.masterGain);
+
+    // Octave doubling voice — melody played one octave lower
+    this.octaveGain = this.ctx.createGain();
+    this.octaveGain.gain.value = 0;
+    this.octaveGain.connect(this.masterGain);
   }
 
   start() {
@@ -100,9 +106,17 @@ class Music {
     this.playing = true;
     this.melodyIndex = 0;
     this.bassIndex = 0;
+    this.passCount = 0;
     this.scheduledSources = [];
     this.masterGain.gain.cancelScheduledValues(this.ctx.currentTime);
     this.masterGain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+
+    // Start bass and octave doubling silent — they fade in on later passes
+    this.bassGain.gain.cancelScheduledValues(this.ctx.currentTime);
+    this.bassGain.gain.setValueAtTime(0, this.ctx.currentTime);
+    this.octaveGain.gain.cancelScheduledValues(this.ctx.currentTime);
+    this.octaveGain.gain.setValueAtTime(0, this.ctx.currentTime);
+
     this.nextMelodyTime = this.ctx.currentTime + 0.1;
     this.nextBassTime = this.ctx.currentTime + 0.1;
     this.schedule();
@@ -140,44 +154,70 @@ class Music {
 
     const eighthDuration = 60 / this.bpm / 2;
     const lookahead = 0.2;
+    const melodyLen = this.melody.length;
+    const bassLen = this.bass.length;
 
     // Schedule melody
     while (this.nextMelodyTime < this.ctx.currentTime + lookahead) {
-      const [freq, eighths] = this.melody[this.melodyIndex % this.melody.length];
+      // Check for pass boundary
+      if (this.melodyIndex > 0 && this.melodyIndex % melodyLen === 0) {
+        this.passCount++;
+        this.updateArrangement(this.nextMelodyTime);
+        // Sync bass to melody phrase boundary when bass first enters
+        if (this.passCount === 1) {
+          this.nextBassTime = this.nextMelodyTime;
+          this.bassIndex = 0;
+        }
+      }
+
+      const idx = this.melodyIndex % melodyLen;
+      const [freq, eighths] = this.melody[idx];
       const duration = eighths * eighthDuration;
 
       if (freq > 0) {
-        this.playNote(freq, this.nextMelodyTime, duration * 0.9, this.melodyGain, 'square');
+        const waveform = this.getMelodyWaveform();
+        const gate = this.getGateLength();
+        this._playOsc(freq, this.nextMelodyTime, duration * gate, this.melodyGain, waveform);
+
+        // Octave doubling: play melody one octave lower
+        if (this.passCount >= 5) {
+          this._playOsc(freq / 2, this.nextMelodyTime, duration * gate, this.octaveGain, waveform);
+        }
       }
 
       this.nextMelodyTime += duration;
       this.melodyIndex++;
     }
 
-    // Schedule bass
-    while (this.nextBassTime < this.ctx.currentTime + lookahead) {
-      const [freq, eighths] = this.bass[this.bassIndex % this.bass.length];
-      const duration = eighths * eighthDuration;
+    // Schedule bass (skip node creation while silent)
+    if (this.passCount < 1) {
+      this.nextBassTime = this.ctx.currentTime + lookahead;
+    } else {
+      while (this.nextBassTime < this.ctx.currentTime + lookahead) {
+        const idx = this.bassIndex % bassLen;
+        const [freq, eighths] = this.bass[idx];
+        const duration = eighths * eighthDuration;
 
-      if (freq > 0) {
-        this.playNote(freq, this.nextBassTime, duration * 0.85, this.bassGain, 'triangle');
+        if (freq > 0) {
+          const bassWaveform = this.getBassWaveform();
+          this._playOsc(freq, this.nextBassTime, duration * 0.85, this.bassGain, bassWaveform);
+        }
+
+        this.nextBassTime += duration;
+        this.bassIndex++;
       }
-
-      this.nextBassTime += duration;
-      this.bassIndex++;
     }
 
     this.scheduleTimer = setTimeout(() => this.schedule(), 50);
   }
 
-  playNote(freq, time, duration, gainNode, type) {
+  _playOsc(freq, time, duration, gainNode, type) {
     const osc = this.ctx.createOscillator();
     const noteGain = this.ctx.createGain();
 
     osc.type = type;
     osc.frequency.value = freq;
 
-    // Envelope: quick attack, sustain, then release to avoid clicks
     const release = Math.min(0.02, duration * 0.2);
     noteGain.gain.setValueAtTime(0.001, time);
     noteGain.gain.linearRampToValueAtTime(1, time + 0.01);
@@ -196,6 +236,44 @@ class Music {
       const idx = this.scheduledSources.indexOf(osc);
       if (idx > -1) this.scheduledSources.splice(idx, 1);
     };
+  }
+
+  updateArrangement(beatTime) {
+    const fadeTime = 2;
+
+    if (this.passCount === 1) {
+      // Pass 1: fade in bass
+      this.bassGain.gain.cancelScheduledValues(beatTime);
+      this.bassGain.gain.setValueAtTime(0, beatTime);
+      this.bassGain.gain.linearRampToValueAtTime(0.35, beatTime + fadeTime);
+    } else if (this.passCount === 5) {
+      // Pass 5: fade in octave doubling
+      this.octaveGain.gain.cancelScheduledValues(beatTime);
+      this.octaveGain.gain.setValueAtTime(0, beatTime);
+      this.octaveGain.gain.linearRampToValueAtTime(0.25, beatTime + fadeTime);
+    }
+  }
+
+  // --- Variation parameters with different cycle lengths ---
+  // Using coprime-ish periods (2, 3, 4) so combinations don't repeat
+  // for 12 passes (~2:34), creating emergent variety.
+
+  getMelodyWaveform() {
+    // 3-way cycle, changes every 2 passes: square → sawtooth → triangle
+    const cycle = Math.floor(this.passCount / 2) % 3;
+    return ['square', 'sawtooth', 'triangle'][cycle];
+  }
+
+  getBassWaveform() {
+    // 3-way cycle, changes every 3 passes: triangle → square → sawtooth
+    const cycle = Math.floor(this.passCount / 3) % 3;
+    return ['triangle', 'square', 'sawtooth'][cycle];
+  }
+
+  getGateLength() {
+    // Alternates every 4 passes: legato ↔ staccato
+    const cycle = Math.floor(this.passCount / 4) % 2;
+    return cycle === 0 ? 0.9 : 0.75;
   }
 
   setSpeed(level) {
