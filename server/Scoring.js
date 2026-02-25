@@ -63,6 +63,10 @@ class Scoring {
     };
   }
 
+  resetCombo() {
+    this.combo = -1;
+  }
+
   addSoftDrop(cells) {
     this.score += cells;
   }

@@ -16,7 +16,7 @@ const GRAVITY_TABLE = [
 const SOFT_DROP_MULTIPLIER = 20;
 const LOCK_DELAY_MS = 500;
 const MAX_LOCK_RESETS = 15;
-const LINE_CLEAR_DELAY_MS = 400; // Delay before cleared rows are removed (visual feedback)
+const LINE_CLEAR_DELAY_MS = 400; // Delay before cleared rows are removed (< client animation 500ms for graceful fade)
 const MAX_DROPS_PER_TICK = 5;    // Safety cap to prevent teleporting
 
 // Timing

@@ -361,7 +361,7 @@ class PlayerBoard {
       this.currentPiece = null;
     } else {
       // No lines cleared - reset combo and proceed immediately
-      this.scoring.combo = -1;
+      this.scoring.resetCombo();
       this._applyPendingGarbage();
       this.spawnPiece();
     }
@@ -403,42 +403,6 @@ class PlayerBoard {
         this.grid[row][col] = this.currentPiece.typeId;
       }
     }
-  }
-
-  clearLines() {
-    const isTSpin = this.lastWasTSpin && this.lastWasRotation;
-    const isTSpinMini = this.lastWasTSpinMini && this.lastWasRotation;
-
-    // Find full rows
-    const fullRows = [];
-    for (let row = 0; row < BOARD_HEIGHT; row++) {
-      if (this.grid[row].every(cell => cell !== 0)) {
-        fullRows.push(row);
-      }
-    }
-
-    const linesCleared = fullRows.length;
-
-    if (linesCleared > 0) {
-      // Remove full rows from top to bottom
-      for (let i = fullRows.length - 1; i >= 0; i--) {
-        this.grid.splice(fullRows[i], 1);
-      }
-      // Add empty rows at top
-      for (let i = 0; i < linesCleared; i++) {
-        this.grid.unshift(new Array(BOARD_WIDTH).fill(0));
-      }
-    }
-
-    // Calculate score
-    const scoreResult = this.scoring.addLineClear(linesCleared, isTSpin, isTSpinMini);
-
-    // Reset combo if no lines cleared
-    if (linesCleared === 0) {
-      this.scoring.combo = -1;
-    }
-
-    return { linesCleared, isTSpin, isTSpinMini, scoreResult };
   }
 
   applyGarbage(lines, gapColumn) {

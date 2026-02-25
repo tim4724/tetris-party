@@ -142,10 +142,6 @@ class Animations {
     }
   }
 
-  addBackToBack(x, y) {
-    this.addTextPopup(x, y, 'B2B!', '#ff6b6b');
-  }
-
   update(deltaMs) {
     const now = performance.now();
     this.active = this.active.filter(anim => {

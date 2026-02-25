@@ -76,7 +76,6 @@ describe('PlayerBoard - spawnPiece()', () => {
 
   test('pre-drop stops when blocked by existing pieces', () => {
     const board = makeBoard();
-    const { Piece } = require('../server/Piece');
     // Place a blocking row at row 2
     board.grid[2] = new Array(BOARD_WIDTH).fill(1);
     board.currentPiece = null;
@@ -257,37 +256,37 @@ describe('PlayerBoard - hardDrop()', () => {
 });
 
 describe('PlayerBoard - line clear', () => {
-  test('filling a row and calling clearLines removes it', () => {
+  test('hardDrop on a full row detects line clear', () => {
     const board = makeBoard();
+    const { Piece } = require('../server/Piece');
 
-    // Fill the bottom row completely
-    const bottomRow = BOARD_HEIGHT - 1;
-    board.grid[bottomRow] = new Array(BOARD_WIDTH).fill(1);
-    // Fill second-to-bottom row leaving just col 0 open
-    board.grid[bottomRow - 1] = new Array(BOARD_WIDTH).fill(1);
-    board.grid[bottomRow - 1][0] = 0;
-    board.grid[bottomRow - 1][1] = 0;
+    // Fill bottom row except columns 0-3 (I piece will fill them)
+    board.grid[BOARD_HEIGHT - 1] = new Array(BOARD_WIDTH).fill(1);
+    board.grid[BOARD_HEIGHT - 1][0] = 0;
+    board.grid[BOARD_HEIGHT - 1][1] = 0;
+    board.grid[BOARD_HEIGHT - 1][2] = 0;
+    board.grid[BOARD_HEIGHT - 1][3] = 0;
 
-    // Use clearLines directly to verify line removal
-    board.lastWasTSpin = false;
-    board.lastWasTSpinMini = false;
-    board.lastWasRotation = false;
-    const { linesCleared } = board.clearLines();
+    // Place I piece horizontally to complete the row
+    board.currentPiece = new Piece('I');
+    board.currentPiece.x = 0;
+    board.currentPiece.y = BOARD_HEIGHT - 2;
 
-    assert.strictEqual(linesCleared, 1, 'One full row should be cleared');
+    const result = board.hardDrop();
+    assert.strictEqual(result.linesCleared, 1, 'One full row should be detected');
   });
 
-  test('clearing lines adds empty rows at top', () => {
+  test('cleared rows are removed after delay', () => {
     const board = makeBoard();
     // Fill last 4 rows completely
     for (let row = BOARD_HEIGHT - 4; row < BOARD_HEIGHT; row++) {
       board.grid[row] = new Array(BOARD_WIDTH).fill(1);
     }
-    board.lastWasTSpin = false;
-    board.lastWasTSpinMini = false;
-    board.lastWasRotation = false;
 
-    board.clearLines();
+    // Set up clearing state and finish it
+    board.clearingRows = [BOARD_HEIGHT - 4, BOARD_HEIGHT - 3, BOARD_HEIGHT - 2, BOARD_HEIGHT - 1];
+    board.clearingStartTime = Date.now() - LINE_CLEAR_DELAY_MS - 1;
+    board._finishClearLines();
 
     // Top rows should be empty
     for (let row = 0; row < 4; row++) {
@@ -300,11 +299,11 @@ describe('PlayerBoard - line clear', () => {
     for (let row = BOARD_HEIGHT - 2; row < BOARD_HEIGHT; row++) {
       board.grid[row] = new Array(BOARD_WIDTH).fill(1);
     }
-    board.lastWasTSpin = false;
-    board.lastWasTSpinMini = false;
-    board.lastWasRotation = false;
 
-    board.clearLines();
+    board.clearingRows = [BOARD_HEIGHT - 2, BOARD_HEIGHT - 1];
+    board.clearingStartTime = Date.now() - LINE_CLEAR_DELAY_MS - 1;
+    board._finishClearLines();
+
     assert.strictEqual(board.grid.length, BOARD_HEIGHT);
   });
 });
