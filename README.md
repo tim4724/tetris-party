@@ -1,10 +1,10 @@
-# Multiplayer Tetris
+# Tetris Party
 
 Browser-based multiplayer Tetris where phones become controllers and a shared screen shows the action.
 
 ## Overview
 
-Multiplayer Tetris supports 1--4 players on a single shared display. One browser window acts as the game screen (TV, monitor, or laptop), while each player joins by scanning a QR code with their phone. The phone becomes a touch-based controller with gesture input and haptic feedback. All game logic runs on a server-authoritative Node.js backend communicating over WebSockets.
+Tetris Party supports 1--4 players on a single shared display. One browser window acts as the game screen (TV, monitor, or laptop), while each player joins by scanning a QR code with their phone. The phone becomes a touch-based controller with gesture input and haptic feedback. All game logic runs on a server-authoritative Node.js backend communicating over WebSockets.
 
 ## Architecture
 
