@@ -200,7 +200,7 @@ class UIRenderer {
     const smallSize = Math.max(9, this.cellSize * 0.38);
     ctx.font = `500 ${smallSize}px ${this._labelFont}`;
     ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
-    const statsY = panelY + scoreSize + Math.max(6, this.cellSize * 0.25);
+    const statsY = panelY + scoreSize + Math.max(10, this.cellSize * 0.4);
     ctx.fillText(
       `${playerState.lines || 0} LINES`,
       this.boardX + this.boardWidth / 2,

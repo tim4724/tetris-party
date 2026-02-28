@@ -92,7 +92,7 @@ function calculateLayout() {
 
   // Each player needs: board (10 cells wide, 20 tall) + side panels (~3 cells each side)
   const totalCellsWide = 10 + 3 + 3; // board + hold panel + next panel
-  const totalCellsTall = 20 + 3;       // board + name + score
+  const totalCellsTall = 20 + 3.6;       // board + name + score + bottom breathing room
 
   // Compute cell size for a given grid arrangement
   function cellSizeFor(cols, rows) {
@@ -694,14 +694,30 @@ function drawTimer(elapsedMs) {
   const font = _timerFontReady ? 'Orbitron' : '"Courier New", monospace';
 
   const cellSize = boardRenderers.length > 0 ? boardRenderers[0].cellSize : 24;
-  const labelSize = Math.max(9, cellSize * 0.38);
+  const labelSize = Math.max(12, cellSize * 0.52);
+  const digitAdvance = labelSize * 0.92;
+  const colonAdvance = labelSize * 0.52;
+  const advances = [];
+  let timerWidth = 0;
+  for (let i = 0; i < timeStr.length; i++) {
+    const advance = timeStr[i] === ':' ? colonAdvance : digitAdvance;
+    advances.push(advance);
+    timerWidth += advance;
+  }
+  const startX = window.innerWidth / 2 - timerWidth / 2;
+  const y = 14;
 
   ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
   ctx.font = `700 ${labelSize}px ${font}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
   ctx.letterSpacing = '0.15em';
-  ctx.fillText(timeStr, window.innerWidth / 2, 10);
+  let cursorX = startX;
+  for (let i = 0; i < timeStr.length; i++) {
+    const charX = cursorX + advances[i] / 2;
+    ctx.fillText(timeStr[i], charX, y);
+    cursorX += advances[i];
+  }
   ctx.letterSpacing = '0px';
 }
 
