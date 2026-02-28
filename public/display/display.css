@@ -136,6 +136,14 @@ html, body {
   animation: fadeUp 0.6s 0.15s ease-out both;
 }
 
+#qr-label {
+  margin: clamp(4px, 0.8vh, 10px) 0 0;
+  font-size: clamp(12px, 1.8vh, 20px);
+  color: rgba(0, 200, 255, 0.7);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
 #qr-code {
   width: clamp(140px, 24vh, 300px);
   height: clamp(140px, 24vh, 300px);
