@@ -62,8 +62,8 @@ html, body {
 }
 
 @keyframes btnPulse {
-  0%, 100% { box-shadow: 0 0 16px rgba(0, 255, 136, 0.25); }
-  50% { box-shadow: 0 0 28px rgba(0, 255, 136, 0.45); }
+  0%, 100% { box-shadow: 0 0 12px rgba(0, 255, 136, 0.2); }
+  50% { box-shadow: 0 0 22px rgba(0, 255, 136, 0.38); }
 }
 
 #lobby-title {
@@ -75,7 +75,7 @@ html, body {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  filter: drop-shadow(0 0 12px rgba(0, 200, 255, 0.25));
+  filter: drop-shadow(0 0 8px rgba(0, 200, 255, 0.15));
   animation: lobbyFadeDown 0.5s ease-out both;
 }
 
@@ -85,10 +85,6 @@ html, body {
   align-items: center;
   gap: 6px;
   margin-top: auto;
-  padding: 1.2rem 2rem;
-  border: 1px solid rgba(0, 200, 255, 0.12);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.02);
   animation: lobbyFadeUp 0.5s 0.15s ease-out both;
 }
 
@@ -111,18 +107,46 @@ html, body {
 
 #player-count {
   font-size: 14px;
-  color: #556;
+  color: rgba(106, 106, 136, 0.8);
   margin-top: 12px;
+  letter-spacing: 0.04em;
   animation: lobbyFadeIn 0.4s 0.3s ease-out both;
 }
 
 #player-identity {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+  animation: lobbyFadeUp 0.5s 0.3s ease-out both;
+}
+
+#player-identity-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 28px;
+  border-radius: 10px;
+  background: rgba(18, 18, 42, 0.9);
+  border: 1px solid color-mix(in srgb, var(--id-color, #888) 20%, transparent);
+}
+
+#player-identity-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--id-color, #888);
+  box-shadow: 0 0 6px var(--id-color, #888);
+  flex-shrink: 0;
+}
+
+#player-identity-name {
   font-family: 'Orbitron', sans-serif;
-  font-size: 14px;
+  font-size: clamp(1.1rem, 5vw, 1.5rem);
   font-weight: 700;
   letter-spacing: 0.06em;
-  margin-top: 8px;
-  animation: lobbyFadeIn 0.4s 0.35s ease-out both;
+  color: var(--id-color, #fff);
 }
 
 #start-btn {
@@ -151,7 +175,7 @@ html, body {
 #start-btn:not(:disabled):active {
   transform: scale(0.95);
   animation: none;
-  box-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+  box-shadow: 0 0 8px rgba(0, 255, 136, 0.3);
 }
 
 #status-text {
@@ -242,11 +266,12 @@ html, body {
 }
 
 #player-indicator {
-  width: 10px;
-  height: 10px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   background: #888;
   flex-shrink: 0;
+  box-shadow: 0 0 5px currentColor;
 }
 
 #score-display {
@@ -318,6 +343,11 @@ html, body {
     circle, rgba(255, 255, 255, 0.10) 1px, transparent 1px
   );
   background-size: 20px 20px;
+  cursor: crosshair;
+}
+
+#touch-pad:active {
+  cursor: grabbing;
 }
 
 #feedback-layer {

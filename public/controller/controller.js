@@ -32,6 +32,7 @@
   const rejoinBtn = document.getElementById('rejoin-btn');
   const playerNameEl = document.getElementById('player-name');
   const playerIndicator = document.getElementById('player-indicator');
+  const playerIdentityName = document.getElementById('player-identity-name');
   const scoreDisplay = document.getElementById('score-display');
   const touchArea = document.getElementById('touch-area');
   const feedbackLayer = document.getElementById('feedback-layer');
@@ -76,10 +77,10 @@
     vibrate(1);
   }
 
-  // Capture-phase listener so it fires before any other touch handler.
-  document.addEventListener('touchstart', function onFirstTouch() {
+  // Capture-phase listener so it fires before any other pointer handler.
+  document.addEventListener('pointerdown', function onFirstPointer() {
     primeVibration();
-    document.removeEventListener('touchstart', onFirstTouch, true);
+    document.removeEventListener('pointerdown', onFirstPointer, true);
   }, { capture: true, passive: true });
 
   // WebSocket connection
@@ -190,6 +191,19 @@
     const name = PLAYER_NAMES[playerId - 1] || ('Player ' + playerId);
     playerNameEl.textContent = name;
     playerIndicator.style.background = playerColor;
+    playerIndicator.style.color = playerColor;
+
+    // Reconnected into an active game — jump straight to game screen
+    if (data.reconnected && (data.roomState === 'playing' || data.roomState === 'countdown')) {
+      hideLobbyElements();
+      gameScreen.classList.remove('dead');
+      gameScreen.style.setProperty('--player-color', playerColor);
+      removeKoOverlay();
+      removeCountdownOverlay();
+      showScreen('game');
+      initTouchInput();
+      return;
+    }
 
     // Show lobby UI
     lobbyTitle.classList.remove('hidden');
@@ -199,9 +213,9 @@
     rejoinBtn.classList.add('hidden');
     updatePlayerCount();
 
-    // Show player identity
-    playerIdentity.textContent = name;
-    playerIdentity.style.color = playerColor;
+    // Show player identity card
+    playerIdentity.style.setProperty('--id-color', playerColor);
+    playerIdentityName.textContent = name;
     playerIdentity.classList.remove('hidden');
 
     if (isHost) {
@@ -456,13 +470,13 @@
       touchInput.destroy();
     }
 
-    // Track touch coordinates for positioned feedback (remove previous to avoid leak)
-    if (coordTracker) touchArea.removeEventListener('touchstart', coordTracker);
+    // Track pointer coordinates for positioned feedback (remove previous to avoid leak)
+    if (coordTracker) touchArea.removeEventListener('pointerdown', coordTracker);
     coordTracker = function (e) {
-      lastTouchX = e.touches[0].clientX;
-      lastTouchY = e.touches[0].clientY;
+      lastTouchX = e.clientX;
+      lastTouchY = e.clientY;
     };
-    touchArea.addEventListener('touchstart', coordTracker, { passive: true });
+    touchArea.addEventListener('pointerdown', coordTracker, { passive: true });
 
     touchInput = new TouchInput(touchArea, function (action, data) {
       // Gesture feedback
