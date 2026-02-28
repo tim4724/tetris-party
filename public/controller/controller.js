@@ -539,6 +539,26 @@
     send(MSG.START_GAME, { mode: MODE.COMPETITIVE });
   });
 
+  // When the phone locks, the browser freezes the page and the WebSocket
+  // goes stale.  Messages sent while frozen (like GAME_START) are lost.
+  // Force a fresh reconnection when the page becomes visible again so the
+  // controller picks up the current room state.
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState !== 'visible') return;
+    if (currentScreen === 'gameover' || gameCancelled) return;
+    // Tear down the (possibly stale) connection and reconnect immediately.
+    reconnectAttempts = 0;
+    clearTimeout(reconnectTimer);
+    if (ws) {
+      // Suppress the onclose→attemptReconnect chain; we're reconnecting ourselves.
+      ws.onclose = null;
+      ws.onerror = null;
+      try { ws.close(); } catch (_) {}
+      ws = null;
+    }
+    connect();
+  });
+
   // Start connection
   connect();
 })();

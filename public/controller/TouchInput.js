@@ -16,7 +16,12 @@ class TouchInput {
     this.SOFT_DROP_MAX_SPEED = 10;
     this.SOFT_DROP_MAX_DIST = 200;
 
-    // Touch tracking state
+    // Wheel config (for trackpad two-finger scroll)
+    this.WHEEL_H_THRESHOLD = 60;
+    this.WHEEL_V_THRESHOLD = 120;
+    this.WHEEL_RESET_MS = 150;
+
+    // Pointer tracking state
     this.activeId = null;
     this.anchorX = 0;
     this.anchorY = 0;
@@ -33,16 +38,34 @@ class TouchInput {
     this.posBuffer = [];
     this.POS_BUFFER_SIZE = 4;
 
-    // Bind event handlers
-    this._onTouchStart = this._onTouchStart.bind(this);
-    this._onTouchMove = this._onTouchMove.bind(this);
-    this._onTouchEnd = this._onTouchEnd.bind(this);
-    this._onTouchCancel = this._onTouchCancel.bind(this);
+    // Wheel accumulator state
+    this._wheelAccumX = 0;
+    this._wheelAccumY = 0;
+    this._wheelTimer = null;
+    this._wheelVCooldown = false;
 
-    this.el.addEventListener('touchstart', this._onTouchStart, { passive: false });
-    this.el.addEventListener('touchmove', this._onTouchMove, { passive: false });
-    this.el.addEventListener('touchend', this._onTouchEnd, { passive: false });
-    this.el.addEventListener('touchcancel', this._onTouchCancel, { passive: false });
+    // Bind event handlers
+    this._onPointerDown = this._onPointerDown.bind(this);
+    this._onPointerMove = this._onPointerMove.bind(this);
+    this._onPointerUp = this._onPointerUp.bind(this);
+    this._onPointerCancel = this._onPointerCancel.bind(this);
+    this._onWheel = this._onWheel.bind(this);
+    this._onContextMenu = this._onContextMenu.bind(this);
+
+    // Pointer events (unified touch + mouse + pen)
+    this.el.addEventListener('pointerdown', this._onPointerDown);
+    this.el.addEventListener('pointermove', this._onPointerMove);
+    this.el.addEventListener('pointerup', this._onPointerUp);
+    this.el.addEventListener('pointercancel', this._onPointerCancel);
+
+    // Wheel events for trackpad scroll gestures
+    this.el.addEventListener('wheel', this._onWheel, { passive: false });
+
+    // Prevent context menu on right-click
+    this.el.addEventListener('contextmenu', this._onContextMenu);
+
+    // Ensure touch-action none for pointer events to suppress browser gestures
+    this.el.style.touchAction = 'none';
   }
 
   _resetState() {
@@ -91,17 +114,25 @@ class TouchInput {
     return Math.round(this.SOFT_DROP_MIN_SPEED + t * (this.SOFT_DROP_MAX_SPEED - this.SOFT_DROP_MIN_SPEED));
   }
 
-  _onTouchStart(e) {
+  _onContextMenu(e) {
     e.preventDefault();
+  }
 
-    // Only track first touch
+  _onPointerDown(e) {
+    // Only primary button (left click / touch / pen contact)
+    if (e.button !== 0) return;
+
+    // Only track one pointer at a time
     if (this.activeId !== null) return;
 
-    const touch = e.changedTouches[0];
-    this.activeId = touch.identifier;
+    e.preventDefault();
 
-    const x = touch.clientX;
-    const y = touch.clientY;
+    this.activeId = e.pointerId;
+    // Capture pointer so move/up events fire even outside the element
+    this.el.setPointerCapture(e.pointerId);
+
+    const x = e.clientX;
+    const y = e.clientY;
     const now = e.timeStamp;
 
     this.anchorX = x;
@@ -118,14 +149,11 @@ class TouchInput {
     this._pushPos(x, y, now);
   }
 
-  _onTouchMove(e) {
-    e.preventDefault();
+  _onPointerMove(e) {
+    if (e.pointerId !== this.activeId) return;
 
-    const touch = this._findActiveTouch(e.changedTouches);
-    if (!touch) return;
-
-    const x = touch.clientX;
-    const y = touch.clientY;
+    const x = e.clientX;
+    const y = e.clientY;
     const now = e.timeStamp;
 
     this._pushPos(x, y, now);
@@ -205,14 +233,11 @@ class TouchInput {
     this.lastTime = now;
   }
 
-  _onTouchEnd(e) {
-    e.preventDefault();
+  _onPointerUp(e) {
+    if (e.pointerId !== this.activeId) return;
 
-    const touch = this._findActiveTouch(e.changedTouches);
-    if (!touch) return;
-
-    const x = touch.clientX;
-    const y = touch.clientY;
+    const x = e.clientX;
+    const y = e.clientY;
     const now = e.timeStamp;
     this._pushPos(x, y, now);
 
@@ -275,8 +300,8 @@ class TouchInput {
     this._resetState();
   }
 
-  _onTouchCancel(e) {
-    e.preventDefault();
+  _onPointerCancel(e) {
+    if (e.pointerId !== this.activeId) return;
 
     // End soft drop if active, but don't fire any final gesture
     if (this.isSoftDropping) {
@@ -288,20 +313,71 @@ class TouchInput {
     this._resetState();
   }
 
-  _findActiveTouch(touchList) {
-    for (let i = 0; i < touchList.length; i++) {
-      if (touchList[i].identifier === this.activeId) {
-        return touchList[i];
+  // Wheel handler for trackpad two-finger scroll gestures.
+  // Horizontal scroll → move piece left/right (ratcheted).
+  // Fast vertical scroll down → hard drop, up → hold.
+  _onWheel(e) {
+    e.preventDefault();
+
+    // Don't process wheel during active pointer drag
+    if (this.activeId !== null) return;
+
+    // Normalize deltaMode to pixels.
+    // deltaX/deltaY reflect the *scroll direction* (content movement), not
+    // finger direction.  With macOS natural scrolling, swiping fingers down
+    // produces negative deltaY ("scroll up").  We negate so the mapping is
+    // finger-relative: fingers down → positive → hard drop.
+    let dx = -e.deltaX;
+    let dy = -e.deltaY;
+    if (e.deltaMode === 1) { dx *= 16; dy *= 16; }
+    else if (e.deltaMode === 2) { dx *= 100; dy *= 100; }
+
+    this._wheelAccumX += dx;
+    this._wheelAccumY += dy;
+
+    // Horizontal: ratcheted movement
+    const hSteps = Math.trunc(this._wheelAccumX / this.WHEEL_H_THRESHOLD);
+    if (hSteps !== 0) {
+      const action = hSteps > 0 ? INPUT.RIGHT : INPUT.LEFT;
+      const count = Math.abs(hSteps);
+      for (let i = 0; i < count; i++) {
+        this.onInput(action);
+      }
+      this._wheelAccumX -= hSteps * this.WHEEL_H_THRESHOLD;
+    }
+
+    // Vertical: hard drop (scroll down) / hold (scroll up).
+    // Once fired, enter cooldown until the gesture ends (reset timeout)
+    // to prevent a single swipe from triggering multiple actions.
+    if (!this._wheelVCooldown) {
+      if (this._wheelAccumY > this.WHEEL_V_THRESHOLD) {
+        this.onInput(INPUT.HARD_DROP);
+        this._wheelAccumY = 0;
+        this._wheelVCooldown = true;
+      } else if (this._wheelAccumY < -this.WHEEL_V_THRESHOLD) {
+        this.onInput(INPUT.HOLD);
+        this._wheelAccumY = 0;
+        this._wheelVCooldown = true;
       }
     }
-    return null;
+
+    // Reset accumulators after a scroll pause (gesture ended)
+    clearTimeout(this._wheelTimer);
+    this._wheelTimer = setTimeout(() => {
+      this._wheelAccumX = 0;
+      this._wheelAccumY = 0;
+      this._wheelVCooldown = false;
+    }, this.WHEEL_RESET_MS);
   }
 
   destroy() {
-    this.el.removeEventListener('touchstart', this._onTouchStart);
-    this.el.removeEventListener('touchmove', this._onTouchMove);
-    this.el.removeEventListener('touchend', this._onTouchEnd);
-    this.el.removeEventListener('touchcancel', this._onTouchCancel);
+    this.el.removeEventListener('pointerdown', this._onPointerDown);
+    this.el.removeEventListener('pointermove', this._onPointerMove);
+    this.el.removeEventListener('pointerup', this._onPointerUp);
+    this.el.removeEventListener('pointercancel', this._onPointerCancel);
+    this.el.removeEventListener('wheel', this._onWheel);
+    this.el.removeEventListener('contextmenu', this._onContextMenu);
+    clearTimeout(this._wheelTimer);
   }
 }
 
