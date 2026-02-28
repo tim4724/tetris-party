@@ -195,6 +195,9 @@ class PlayerBoard {
         this.lockTimer = Date.now();
         this.lockResets++;
       }
+    } else {
+      // Piece moved to a position with space below — clear lock timer so gravity continues
+      this.lockTimer = null;
     }
   }
 

@@ -518,6 +518,119 @@ describe('PlayerBoard - hold()', () => {
   });
 });
 
+describe('PlayerBoard - lock timer clears when moved off surface', () => {
+  test('moveLeft off a ledge clears the lock timer', () => {
+    const board = makeBoard();
+    const { Piece } = require('../server/Piece');
+
+    // Create a ledge: fill row 15, columns 6-9 only
+    // O piece blocks (rotation 0): [col+1,row], [col+2,row], [col+1,row+1], [col+2,row+1]
+    for (let c = 6; c <= 9; c++) {
+      board.grid[15][c] = 1;
+    }
+
+    // Place O piece at x=4, y=13 → bottom blocks at (5,14) and (6,14)
+    // Row 15 has blocks at col 6 → piece is on surface
+    board.currentPiece = new Piece('O');
+    board.currentPiece.x = 4;
+    board.currentPiece.y = 13;
+
+    // Verify piece is on surface
+    assert.ok(board._isOnSurface(), 'Piece should be on surface (ledge)');
+
+    // Simulate lock timer being active
+    board.lockTimer = Date.now();
+
+    // Move left: x=3 → bottom blocks at (4,14) and (5,14)
+    // Row 15, cols 4 and 5 are empty → piece is no longer on surface
+    board.moveLeft();
+
+    assert.ok(!board._isOnSurface(), 'Piece should NOT be on surface after moving off ledge');
+    assert.strictEqual(board.lockTimer, null, 'Lock timer should be cleared when piece moves off surface');
+  });
+
+  test('moveRight off a ledge clears the lock timer', () => {
+    const board = makeBoard();
+    const { Piece } = require('../server/Piece');
+
+    // Create a ledge: fill row 15, columns 0-4
+    // O piece blocks are at offsets (+1,+0), (+2,+0), (+1,+1), (+2,+1)
+    for (let c = 0; c <= 4; c++) {
+      board.grid[15][c] = 1;
+    }
+
+    // Place O piece at x=3, y=13 → bottom blocks at cols 4 and 5
+    // Row 15 col 4 is filled → piece is on surface
+    board.currentPiece = new Piece('O');
+    board.currentPiece.x = 3;
+    board.currentPiece.y = 13;
+
+    assert.ok(board._isOnSurface(), 'Piece should be on surface (ledge)');
+    board.lockTimer = Date.now();
+
+    // Move right: x=4 → bottom blocks at cols 5 and 6
+    // Row 15 cols 5 and 6 are empty → piece is no longer on surface
+    board.moveRight();
+
+    assert.ok(!board._isOnSurface(), 'Piece should NOT be on surface after moving off ledge');
+    assert.strictEqual(board.lockTimer, null, 'Lock timer should be cleared when piece moves off surface');
+  });
+
+  test('move that stays on surface keeps lock timer active', () => {
+    const board = makeBoard();
+    const { Piece } = require('../server/Piece');
+
+    // Create a wide ledge: fill row 15, columns 3-8
+    for (let c = 3; c <= 8; c++) {
+      board.grid[15][c] = 1;
+    }
+
+    // Place O piece at x=4, y=13 → bottom blocks at (5,14) and (6,14)
+    board.currentPiece = new Piece('O');
+    board.currentPiece.x = 4;
+    board.currentPiece.y = 13;
+
+    assert.ok(board._isOnSurface(), 'Piece should be on surface');
+    board.lockTimer = Date.now();
+
+    // Move left: x=3 → bottom blocks at (4,14) and (5,14)
+    // Row 15, cols 4 and 5 are filled → piece stays on surface
+    board.moveLeft();
+
+    assert.ok(board._isOnSurface(), 'Piece should still be on surface');
+    assert.ok(board.lockTimer !== null, 'Lock timer should remain active when still on surface');
+  });
+
+  test('gravity drops piece after it is moved off a ledge', () => {
+    const board = makeBoard();
+    const { Piece } = require('../server/Piece');
+
+    // Create a ledge: fill row 15, columns 6-9
+    for (let c = 6; c <= 9; c++) {
+      board.grid[15][c] = 1;
+    }
+
+    // Place O piece on the ledge
+    board.currentPiece = new Piece('O');
+    board.currentPiece.x = 4;
+    board.currentPiece.y = 13;
+    board.lockTimer = Date.now();
+    board.gravityCounter = 0;
+
+    // Move off the ledge
+    board.moveLeft();
+    assert.strictEqual(board.lockTimer, null, 'Lock timer should be cleared');
+
+    // Simulate enough gravity to drop one cell
+    // Set gravityCounter high enough to trigger a drop
+    board.gravityCounter = 999;
+    const yBefore = board.currentPiece.y;
+    board.tick(16);
+
+    assert.ok(board.currentPiece.y > yBefore, 'Piece should have fallen after being moved off ledge');
+  });
+});
+
 describe('PlayerBoard - ghost piece', () => {
   test('getGhostY() returns a value >= currentPiece.y', () => {
     const board = makeBoard();
