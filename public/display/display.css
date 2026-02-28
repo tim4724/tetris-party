@@ -40,8 +40,8 @@ html, body {
 
 /* Lobby Screen */
 #lobby-screen h1 {
-  font-size: 4rem;
-  letter-spacing: 0.5em;
+  font-size: clamp(2rem, 5vw, 4rem);
+  letter-spacing: 0.3em;
   margin-bottom: 1.5rem;
   background: linear-gradient(135deg, #4444ff, #00ccff, #00ff88);
   -webkit-background-clip: text;
