@@ -166,6 +166,7 @@ async function handleNewConnection(ws, msg) {
       const localIP = getLocalIP();
       joinUrl = `http://${localIP}:${PORT}/${roomCode}`;
     }
+    room.joinUrl = joinUrl;
     const qrDataUrl = await room.getQRUrl(joinUrl);
 
     send(ws, MSG.ROOM_CREATED, { roomCode, qrDataUrl, joinUrl });
@@ -176,6 +177,26 @@ async function handleNewConnection(ws, msg) {
     if (!room) {
       send(ws, MSG.ERROR, { message: 'Room not found' });
       return;
+    }
+
+    // QR-based rejoin: player scanned a rejoin QR code with ?rejoin=playerId
+    if (msg.rejoinId) {
+      const result = room.rejoinById(parseInt(msg.rejoinId), ws);
+      if (result) {
+        clientInfo.set(ws, { roomCode: msg.roomCode, playerId: result.playerId, type: 'controller' });
+        send(ws, MSG.JOINED, {
+          playerId: result.playerId,
+          playerColor: result.color,
+          reconnectToken: result.reconnectToken,
+          isHost: result.isHost,
+          reconnected: true,
+          playerCount: room.players.size,
+          roomState: room.state
+        });
+        console.log(`Player ${result.playerId} rejoined room ${msg.roomCode} via QR`);
+        return;
+      }
+      // Fall through to normal addPlayer if rejoin failed
     }
 
     const result = room.addPlayer(ws, msg.name);
@@ -225,6 +246,9 @@ function handleDisplayMessage(room, msg) {
       break;
     case MSG.RETURN_TO_LOBBY:
       room.returnToLobby();
+      break;
+    case MSG.PLAY_AGAIN:
+      room.playAgain();
       break;
   }
 }

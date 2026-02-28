@@ -159,7 +159,7 @@ describe('Room - removePlayer()', () => {
     assert.equal(error.code, 'HOST_DISCONNECTED');
   });
 
-  test('in-game removal marks player disconnected and starts grace timer', () => {
+  test('in-game removal marks player disconnected and sends PLAYER_DISCONNECTED to display', () => {
     const ws1 = mockWs();
     room.addPlayer(ws1, 'Alice');
     room.state = ROOM_STATE.PLAYING;
@@ -169,10 +169,8 @@ describe('Room - removePlayer()', () => {
     const player = room.players.get(1);
     assert.equal(player.connected, false);
     assert.equal(player.ws, null);
-    assert.ok(player.graceTimer);
-
-    // Cleanup the timer
-    clearTimeout(player.graceTimer);
+    // No grace timer — slot stays reserved, QR is shown on display
+    assert.equal(player.graceTimer, null);
   });
 });
 
@@ -211,24 +209,20 @@ describe('Room - reconnectByToken()', () => {
     const ws2 = mockWs();
     const result = room.reconnectByToken(ws2, 'bad-token');
     assert.equal(result, null);
-
-    // Cleanup grace timer
-    const player = room.players.get(1);
-    clearTimeout(player.graceTimer);
   });
 
-  test('clears grace timer on reconnect', () => {
+  test('reconnect sends PLAYER_RECONNECTED to display', () => {
     const ws1 = mockWs();
     const result = room.addPlayer(ws1, 'Alice');
     room.state = ROOM_STATE.PLAYING;
     room.removePlayer(1);
 
-    const player = room.players.get(1);
-    assert.ok(player.graceTimer, 'grace timer should be set');
-
     const ws2 = mockWs();
-    room.reconnectByToken(ws2, result.reconnectToken);
-    assert.equal(player.graceTimer, null, 'grace timer should be cleared');
+    room.rejoinById(1, ws2);
+
+    const reconnectMsg = displayWs.sent.find(m => m.type === MSG.PLAYER_RECONNECTED);
+    assert.ok(reconnectMsg, 'display should receive PLAYER_RECONNECTED');
+    assert.equal(reconnectMsg.playerId, 1);
   });
 });
 

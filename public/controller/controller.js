@@ -51,8 +51,9 @@
     gameoverScreen.classList.toggle('hidden', name !== 'gameover');
   }
 
-  // Extract room code from URL
+  // Extract room code and optional rejoin ID from URL
   roomCode = location.pathname.split('/').filter(Boolean)[0] || null;
+  const rejoinId = new URLSearchParams(location.search).get('rejoin');
   if (!roomCode) {
     statusText.textContent = 'No Room Code';
     statusDetail.textContent = 'Scan a QR code or use a join link';
@@ -95,6 +96,8 @@
       const token = sessionStorage.getItem('reconnectToken_' + roomCode);
       if (token) {
         send(MSG.REJOIN, { roomCode: roomCode, reconnectToken: token });
+      } else if (rejoinId) {
+        send(MSG.JOIN, { roomCode: roomCode, rejoinId: rejoinId });
       } else {
         send(MSG.JOIN, { roomCode: roomCode });
       }
@@ -166,6 +169,13 @@
         break;
       case MSG.GAME_END:
         onGameEnd(data);
+        break;
+      case MSG.ROOM_RESET:
+        gameCancelled = true;
+        hideLobbyElements();
+        statusText.textContent = 'Game Over';
+        statusDetail.textContent = '';
+        showScreen('waiting');
         break;
       case MSG.INPUT_ACK:
         // Could track unacked inputs here for prediction rollback

@@ -15,6 +15,7 @@ let canvas = null;
 let ctx = null;
 let lastFrameTime = null;
 let playerIndexCounter = 0;
+let disconnectedQRs = new Map(); // playerId -> Image
 
 // --- DOM References ---
 const welcomeScreen = document.getElementById('welcome-screen');
@@ -29,17 +30,19 @@ const playerListEl = document.getElementById('player-list');
 const startBtn = document.getElementById('start-btn');
 const countdownOverlay = document.getElementById('countdown-overlay');
 const resultsList = document.getElementById('results-list');
-const lobbyBtn = document.getElementById('lobby-btn');
+const playAgainBtn = document.getElementById('play-again-btn');
+const exitBtn = document.getElementById('exit-btn');
 
 // --- Screen Management ---
 function showScreen(name) {
   currentScreen = name;
   welcomeScreen.classList.toggle('hidden', name !== 'welcome');
   lobbyScreen.classList.toggle('hidden', name !== 'lobby');
-  gameScreen.classList.toggle('hidden', name !== 'game');
+  // Keep game screen visible behind results overlay
+  gameScreen.classList.toggle('hidden', name !== 'game' && name !== 'results');
   resultsScreen.classList.toggle('hidden', name !== 'results');
 
-  if (name === 'game') {
+  if (name === 'game' || name === 'results') {
     initCanvas();
     calculateLayout();
   }
@@ -187,6 +190,12 @@ function handleMessage(msg) {
     case MSG.GAME_END:
       onGameEnd(msg);
       break;
+    case MSG.PLAYER_DISCONNECTED:
+      onPlayerDisconnected(msg);
+      break;
+    case MSG.PLAYER_RECONNECTED:
+      onPlayerReconnected(msg);
+      break;
   }
 }
 
@@ -312,8 +321,27 @@ function onPlayerKO(msg) {
 
 function onGameEnd(msg) {
   if (music) music.stop();
+  disconnectedQRs.clear();
   showScreen('results');
+  // Retrigger fade-in animation
+  resultsScreen.style.animation = 'none';
+  resultsScreen.offsetHeight;
+  resultsScreen.style.animation = '';
   renderResults(msg.results);
+}
+
+function onPlayerDisconnected(msg) {
+  if (msg.qrDataUrl) {
+    const img = new Image();
+    img.src = msg.qrDataUrl;
+    disconnectedQRs.set(msg.playerId, img);
+  } else {
+    disconnectedQRs.set(msg.playerId, null);
+  }
+}
+
+function onPlayerReconnected(msg) {
+  disconnectedQRs.delete(msg.playerId);
 }
 
 // --- Lobby UI ---
@@ -413,18 +441,35 @@ function renderResults(results) {
   }
 }
 
-// Back to lobby
-lobbyBtn.addEventListener('click', () => {
-  send(MSG.RETURN_TO_LOBBY);
-  onRoomReset();
-  send(MSG.CREATE_ROOM);
+// Play Again — restart with same players
+playAgainBtn.addEventListener('click', () => {
+  initMusic();
+  send(MSG.PLAY_AGAIN);
+});
+
+// Exit — return to welcome screen
+exitBtn.addEventListener('click', () => {
+  if (music) music.stop();
+  gameState = null;
+  boardRenderers = [];
+  uiRenderers = [];
+  playerIndexCounter = 0;
+  players.clear();
+  playerOrder = [];
+  disconnectedQRs.clear();
+  if (ws) {
+    ws.onclose = null;
+    ws.close();
+    ws = null;
+  }
+  showScreen('welcome');
 });
 
 // --- Render Loop ---
 function renderLoop(timestamp) {
   requestAnimationFrame(renderLoop);
 
-  if (currentScreen !== 'game' || !ctx || !gameState) return;
+  if ((currentScreen !== 'game' && currentScreen !== 'results') || !ctx || !gameState) return;
 
   if (lastFrameTime === null) lastFrameTime = timestamp;
   const deltaMs = timestamp - lastFrameTime;
@@ -473,6 +518,36 @@ function renderLoop(timestamp) {
 
       boardRenderers[i].render(enriched);
       uiRenderers[i].render(enriched);
+
+      // Draw QR overlay for disconnected players
+      if (disconnectedQRs.has(playerData.id)) {
+        const br = boardRenderers[i];
+        const bx = br.x;
+        const by = br.y;
+        const bw = 10 * br.cellSize;
+        const bh = 20 * br.cellSize;
+
+        // Semi-transparent dark overlay
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+        ctx.fillRect(bx, by, bw, bh);
+
+        // QR code image centered on board
+        const qrImg = disconnectedQRs.get(playerData.id);
+        if (qrImg && qrImg.complete && qrImg.naturalWidth > 0) {
+          const qrSize = Math.min(bw, bh) * 0.55;
+          const qrX = bx + (bw - qrSize) / 2;
+          const qrY = by + (bh - qrSize) / 2 - br.cellSize;
+          ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
+        }
+
+        // "Scan to rejoin" label
+        const labelSize = Math.max(10, br.cellSize * 0.55);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+        ctx.font = `600 ${labelSize}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText('Scan to rejoin', bx + bw / 2, by + bh - br.cellSize * 0.5);
+      }
 
       if (shake.x !== 0 || shake.y !== 0) {
         ctx.restore();

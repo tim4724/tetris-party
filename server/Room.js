@@ -22,6 +22,7 @@ class Room {
     this.game = null;
     this.countdownTimer = null;
     this.hostId = null;
+    this.joinUrl = null;
 
     activeRoomCodes.add(roomCode);
   }
@@ -118,16 +119,18 @@ class Room {
         });
       }
     } else {
-      // In game: mark disconnected, start grace timer
+      // In game: mark disconnected, show QR on display for rejoin
       player.connected = false;
       player.ws = null;
-      player.graceTimer = setTimeout(() => {
-        // Grace period expired, player is out
-        this.sendToDisplay(MSG.PLAYER_LEFT, {
-          playerId,
-          playerCount: this.getConnectedCount()
+
+      if (this.joinUrl) {
+        const rejoinUrl = `${this.joinUrl}?rejoin=${playerId}`;
+        this.getQRUrl(rejoinUrl).then((qrDataUrl) => {
+          this.sendToDisplay(MSG.PLAYER_DISCONNECTED, { playerId, qrDataUrl });
         });
-      }, RECONNECT_GRACE_MS);
+      } else {
+        this.sendToDisplay(MSG.PLAYER_DISCONNECTED, { playerId, qrDataUrl: null });
+      }
     }
   }
 
@@ -162,6 +165,30 @@ class Room {
     return null;
   }
 
+  rejoinById(playerId, ws) {
+    const player = this.players.get(playerId);
+    if (!player || player.connected) return null;
+
+    player.ws = ws;
+    player.connected = true;
+    const reconnectToken = generateToken();
+    player.reconnectToken = reconnectToken;
+
+    if (player.graceTimer) {
+      clearTimeout(player.graceTimer);
+      player.graceTimer = null;
+    }
+
+    this.sendToDisplay(MSG.PLAYER_RECONNECTED, { playerId });
+
+    return {
+      playerId,
+      color: player.color,
+      reconnectToken,
+      isHost: playerId === this.hostId
+    };
+  }
+
   async getQRUrl(joinUrl) {
     try {
       return await QRCode.toDataURL(joinUrl, { width: 256, margin: 1 });
@@ -179,20 +206,37 @@ class Room {
       return;
     }
 
+    this._lastMode = mode;
+    this._lastSettings = settings;
+    this._startNewGame(mode, settings);
+  }
+
+  playAgain() {
+    if (this.state !== ROOM_STATE.RESULTS) return;
+    this._startNewGame(this._lastMode, this._lastSettings);
+  }
+
+  _startNewGame(mode, settings) {
+    if (this.game) {
+      this.game.stop();
+      this.game = null;
+    }
+
     this.state = ROOM_STATE.COUNTDOWN;
     const gameMode = mode || MODE.COMPETITIVE;
     const gameSettings = settings || {};
 
     this.startCountdown(() => {
-      const players = new Map();
+      const gamePlayers = new Map();
       for (const [id, p] of this.players) {
-        players.set(id, { ws: p.ws });
+        if (p.connected) {
+          gamePlayers.set(id, { ws: p.ws });
+        }
       }
 
-      this.game = new Game(players, gameMode, gameSettings, {
+      this.game = new Game(gamePlayers, gameMode, gameSettings, {
         onGameState: (state) => {
           this.sendToDisplay(MSG.GAME_STATE, state);
-          // Send individual player states to their controllers
           if (state.players) {
             for (const p of state.players) {
               this.sendToPlayer(p.id, MSG.PLAYER_STATE, {
@@ -316,6 +360,8 @@ class Room {
   }
 
   destroy() {
+    // Notify controllers before tearing down
+    this.broadcastToControllers(MSG.ROOM_RESET);
     if (this.countdownTimer) {
       clearInterval(this.countdownTimer);
       this.countdownTimer = null;

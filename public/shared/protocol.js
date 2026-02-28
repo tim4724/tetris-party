@@ -24,6 +24,7 @@ const MSG = {
   CREATE_ROOM: 'create_room',
   START_GAME: 'start_game',
   RETURN_TO_LOBBY: 'return_to_lobby',
+  PLAY_AGAIN: 'play_again',
 
   // Server → Display
   ROOM_CREATED: 'room_created',
@@ -33,7 +34,9 @@ const MSG = {
   GAME_STATE: 'game_state',
   LINE_CLEAR: 'line_clear',
   GARBAGE_SENT: 'garbage_sent',
-  PLAYER_KO: 'player_ko'
+  PLAYER_KO: 'player_ko',
+  PLAYER_DISCONNECTED: 'player_disconnected',
+  PLAYER_RECONNECTED: 'player_reconnected'
 };
 
 // Input action types
