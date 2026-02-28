@@ -21,18 +21,21 @@ class BoardRenderer {
   render(playerState) {
     const ctx = this.ctx;
 
-    // 1. Board background — subtle vertical gradient
-    if (!this._bgGradient) {
-      this._bgGradient = ctx.createLinearGradient(this.x, this.y, this.x, this.y + this.boardHeight);
-      this._bgGradient.addColorStop(0, '#0a0a1e');
-      this._bgGradient.addColorStop(0.5, '#0d0d24');
-      this._bgGradient.addColorStop(1, '#08081a');
-    }
-    ctx.fillStyle = this._bgGradient;
+    // 1. Board background — player-color tinted (matches controller touch pad)
+    const rgb = this._hexToRgb(this.accentColor);
+    // Base dark background
+    ctx.fillStyle = '#080810';
     ctx.fillRect(this.x, this.y, this.boardWidth, this.boardHeight);
+    // Player color tint at 6% opacity
+    if (rgb) {
+      ctx.fillStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.06)`;
+      ctx.fillRect(this.x, this.y, this.boardWidth, this.boardHeight);
+    }
 
     // 2. Grid lines
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+    ctx.strokeStyle = rgb
+      ? `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.10)`
+      : 'rgba(255, 255, 255, 0.08)';
     ctx.lineWidth = 0.5;
     for (let r = 1; r < VISIBLE_ROWS; r++) {
       const py = this.y + r * this.cellSize;
@@ -47,16 +50,6 @@ class BoardRenderer {
       ctx.moveTo(px, this.y);
       ctx.lineTo(px, this.y + this.boardHeight);
       ctx.stroke();
-    }
-
-    // Grid intersection dots for depth
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-    for (let r = 1; r < VISIBLE_ROWS; r++) {
-      for (let c = 1; c < COLS; c++) {
-        const px = this.x + c * this.cellSize;
-        const py = this.y + r * this.cellSize;
-        ctx.fillRect(px - 0.5, py - 0.5, 1, 1);
-      }
     }
 
     // 3. Placed blocks from grid
@@ -128,30 +121,13 @@ class BoardRenderer {
 
   _drawBoardBorder() {
     const ctx = this.ctx;
-    const bx = this.x - 1;
-    const by = this.y - 1;
-    const bw = this.boardWidth + 2;
-    const bh = this.boardHeight + 2;
-
-    // Outer glow — use save/restore for shadow cleanup
-    ctx.save();
     const rgb = this._hexToRgb(this.accentColor);
-    if (rgb) {
-      ctx.shadowColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.35)`;
-      ctx.shadowBlur = 12;
-    }
-    ctx.strokeStyle = this.accentColor;
-    ctx.lineWidth = 1.5;
-    ctx.strokeRect(bx, by, bw, bh);
-    ctx.restore();
-
-    // Inner edge highlight (top)
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
-    ctx.lineWidth = 0.5;
-    ctx.beginPath();
-    ctx.moveTo(this.x, this.y);
-    ctx.lineTo(this.x + this.boardWidth, this.y);
-    ctx.stroke();
+    // Subtle player-color border (matches controller touch pad: 15% color mix)
+    ctx.strokeStyle = rgb
+      ? `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.15)`
+      : 'rgba(255, 255, 255, 0.06)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(this.x - 0.5, this.y - 0.5, this.boardWidth + 1, this.boardHeight + 1);
   }
 
   drawBlock(col, row, color, isGarbage) {

@@ -282,6 +282,118 @@ html, body {
 }
 
 /* ============================================
+   Pause Button & Overlay
+   ============================================ */
+#pause-btn {
+  position: absolute;
+  top: clamp(10px, 1.5vh, 20px);
+  right: clamp(10px, 1.5vw, 20px);
+  z-index: 5;
+  width: clamp(36px, 4vh, 52px);
+  height: clamp(36px, 4vh, 52px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+#pause-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.8);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+#pause-btn .pause-icon {
+  display: flex;
+  gap: 3px;
+}
+
+#pause-btn .pause-icon::before,
+#pause-btn .pause-icon::after {
+  content: '';
+  width: clamp(3px, 0.4vh, 5px);
+  height: clamp(12px, 1.6vh, 18px);
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 1px;
+}
+
+#pause-btn:hover .pause-icon::before,
+#pause-btn:hover .pause-icon::after {
+  background: rgba(255, 255, 255, 0.8);
+}
+
+#pause-btn.hidden {
+  display: none;
+}
+
+#pause-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 15;
+  background: rgba(6, 6, 15, 0.88);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: overlayFadeIn 0.3s ease both;
+}
+
+#pause-overlay h1 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(1.6rem, 4vh, 3.5rem);
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  color: var(--text-primary);
+  margin-bottom: clamp(1.5rem, 3vh, 3rem);
+}
+
+#pause-buttons {
+  display: flex;
+  gap: clamp(0.8rem, 1.5vw, 1.5rem);
+}
+
+#pause-continue-btn {
+  padding: clamp(0.6rem, 1.2vh, 1.2rem) clamp(2rem, 4vw, 4rem);
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #00ff88 0%, #00dd77 100%);
+  color: #003d1f;
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(0.85rem, 1.6vh, 1.2rem);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+#pause-continue-btn:hover {
+  transform: scale(1.04);
+  box-shadow: 0 0 24px rgba(0, 255, 136, 0.4);
+}
+
+#pause-newgame-btn {
+  padding: clamp(0.6rem, 1.2vh, 1.2rem) clamp(2rem, 4vw, 4rem);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(0.85rem, 1.6vh, 1.2rem);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+#pause-newgame-btn:hover {
+  border-color: rgba(0, 200, 255, 0.5);
+  color: rgba(0, 200, 255, 0.9);
+}
+
+/* ============================================
    Results Overlay
    ============================================ */
 #results-screen {

@@ -23,6 +23,7 @@ class Room {
     this.countdownTimer = null;
     this.hostId = null;
     this.joinUrl = null;
+    this.paused = false;
 
     activeRoomCodes.add(roomCode);
   }
@@ -222,6 +223,7 @@ class Room {
       this.game.stop();
       this.game = null;
     }
+    this.paused = false;
 
     this.state = ROOM_STATE.COUNTDOWN;
 
@@ -294,21 +296,35 @@ class Room {
     }, 1000);
   }
 
+  pauseGame() {
+    if (this.state !== ROOM_STATE.PLAYING || this.paused) return;
+    this.paused = true;
+    if (this.game) this.game.pause();
+    this.broadcast(MSG.GAME_PAUSED, {});
+  }
+
+  resumeGame() {
+    if (this.state !== ROOM_STATE.PLAYING || !this.paused) return;
+    this.paused = false;
+    if (this.game) this.game.resume();
+    this.broadcast(MSG.GAME_RESUMED, {});
+  }
+
   handleInput(playerId, action, seq) {
-    if (this.game && this.state === ROOM_STATE.PLAYING) {
+    if (this.game && this.state === ROOM_STATE.PLAYING && !this.paused) {
       this.game.processInput(playerId, action);
       this.sendToPlayer(playerId, MSG.INPUT_ACK, { seq });
     }
   }
 
   handleSoftDropStart(playerId, speed) {
-    if (this.game && this.state === ROOM_STATE.PLAYING) {
+    if (this.game && this.state === ROOM_STATE.PLAYING && !this.paused) {
       this.game.handleSoftDropStart(playerId, speed);
     }
   }
 
   handleSoftDropEnd(playerId) {
-    if (this.game && this.state === ROOM_STATE.PLAYING) {
+    if (this.game && this.state === ROOM_STATE.PLAYING && !this.paused) {
       this.game.handleSoftDropEnd(playerId);
     }
   }
@@ -353,6 +369,7 @@ class Room {
       this.game.stop();
       this.game = null;
     }
+    this.paused = false;
     this.state = ROOM_STATE.LOBBY;
     this.broadcast(MSG.RETURN_TO_LOBBY, { playerCount: this.players.size });
   }

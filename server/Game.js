@@ -13,6 +13,8 @@ class Game {
     this.logicInterval = null;
     this.broadcastInterval = null;
     this.ended = false;
+    this.paused = false;
+    this.pausedAt = null;
 
     for (const [id] of players) {
       const board = new PlayerBoard(id);
@@ -46,6 +48,24 @@ class Game {
       clearInterval(this.broadcastInterval);
       this.broadcastInterval = null;
     }
+  }
+
+  pause() {
+    if (this.paused || this.ended) return;
+    this.paused = true;
+    this.pausedAt = Date.now();
+    this.stop();
+  }
+
+  resume() {
+    if (!this.paused || this.ended) return;
+    // Adjust startTime so elapsed doesn't include paused duration
+    const pausedDuration = Date.now() - this.pausedAt;
+    this.startTime += pausedDuration;
+    this.paused = false;
+    this.pausedAt = null;
+    this.logicInterval = setInterval(() => this.logicTick(), LOGIC_TICK_MS);
+    this.broadcastInterval = setInterval(() => this.broadcastTick(), BROADCAST_TICK_MS);
   }
 
   processInput(playerId, action) {

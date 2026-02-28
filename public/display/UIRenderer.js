@@ -38,7 +38,7 @@ class UIRenderer {
     this.accentColor = PLAYER_COLORS[playerIndex] || PLAYER_COLORS[0];
     this.panelWidth = cellSize * 4.5;
     this.miniSize = cellSize * 0.6;
-    this.panelGap = Math.max(10, cellSize * 0.4);
+    this.panelGap = Math.max(6, cellSize * 0.25);
     this._fontLoaded = document.fonts?.check?.('12px Orbitron') ?? false;
     this._labelFont = this._fontLoaded ? 'Orbitron' : '"Courier New", monospace';
   }
@@ -79,22 +79,6 @@ class UIRenderer {
     const nameY = this.boardY - 8;
     const fontSize = Math.max(12, this.cellSize * 0.55);
 
-    // Accent stripe under name area
-    const stripeH = 2;
-    ctx.fillStyle = this.accentColor;
-    ctx.fillRect(this.boardX, nameY + 2, this.boardWidth, stripeH);
-
-    // Subtle glow behind stripe
-    const rgb = this._hexToRgb(this.accentColor);
-    if (rgb) {
-      const glowGrad = ctx.createLinearGradient(this.boardX, nameY - 2, this.boardX, nameY + stripeH + 6);
-      glowGrad.addColorStop(0, 'transparent');
-      glowGrad.addColorStop(0.5, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.15)`);
-      glowGrad.addColorStop(1, 'transparent');
-      ctx.fillStyle = glowGrad;
-      ctx.fillRect(this.boardX, nameY - 2, this.boardWidth, stripeH + 8);
-    }
-
     // Name text
     ctx.fillStyle = '#ffffff';
     ctx.font = `700 ${fontSize}px ${this._labelFont}`;
@@ -108,16 +92,17 @@ class UIRenderer {
       ctx.font = `700 ${lvlSize}px ${this._labelFont}`;
       ctx.textAlign = 'right';
       ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-      ctx.fillText(`LV ${playerState.level}`, this.boardX + this.boardWidth - 2, nameY - 2);
+      ctx.fillText(`Level ${playerState.level}`, this.boardX + this.boardWidth - 2, nameY - 2);
     }
   }
 
   drawHoldPanel(playerState) {
     const ctx = this.ctx;
-    const panelX = this.boardX - this.panelWidth - this.panelGap;
     const panelY = this.boardY;
     const labelSize = Math.max(9, this.cellSize * 0.38);
     const boxSize = this.miniSize * 4.5;
+    // Right-align the box to sit next to the board (mirroring next panel)
+    const panelX = this.boardX - this.panelGap - boxSize;
 
     // Label
     ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
@@ -226,19 +211,18 @@ class UIRenderer {
   drawGarbageMeter(pendingGarbage) {
     const ctx = this.ctx;
     const size = this.cellSize;
-    const meterX = this.boardX - size - 3;
+    const meterX = this.boardX - size - 2;
     const maxRows = 20;
     const rows = Math.min(pendingGarbage, maxRows);
     const inset = 1;
     const r = Math.min(3, size * 0.12);
 
-    // Draw stacked gray blocks from bottom up
+    // Draw stacked gray blocks from bottom up (may overlap hold panel)
     for (let i = 0; i < rows; i++) {
       const y = this.boardY + this.boardHeight - (i + 1) * size;
       ctx.fillStyle = '#3a3a4e';
       this._roundRect(meterX + inset, y + inset, size - inset * 2, size - inset * 2, r);
       ctx.fill();
-      // Subtle highlight matching garbage block style
       ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
       ctx.fillRect(meterX + inset + 1, y + inset + 1, size - inset * 2 - 2, 1);
     }
@@ -322,24 +306,26 @@ class UIRenderer {
   _drawPanel(x, y, w, h) {
     const ctx = this.ctx;
     const r = Math.min(6, this.cellSize * 0.2);
+    const rgb = this._hexToRgb(this.accentColor);
 
-    // Glass panel background — brighter than page bg for contrast
-    ctx.fillStyle = 'rgba(18, 18, 45, 0.9)';
+    // Dark background matching board
+    ctx.fillStyle = '#080810';
     this._roundRect(x, y, w, h, r);
     ctx.fill();
 
-    // Visible border
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+    // Player color tint at 6% (matches board)
+    if (rgb) {
+      ctx.fillStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.06)`;
+      this._roundRect(x, y, w, h, r);
+      ctx.fill();
+    }
+
+    // Subtle player-color border (matches board: 15% color mix)
+    ctx.strokeStyle = rgb
+      ? `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.15)`
+      : 'rgba(255, 255, 255, 0.06)';
     ctx.lineWidth = 1;
     this._roundRect(x, y, w, h, r);
-    ctx.stroke();
-
-    // Top edge highlight
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.18)';
-    ctx.lineWidth = 0.5;
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.lineTo(x + w - r, y);
     ctx.stroke();
   }
 

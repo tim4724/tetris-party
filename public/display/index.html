@@ -41,6 +41,16 @@
   <div id="game-screen" class="screen hidden">
     <canvas id="game-canvas"></canvas>
     <div id="countdown-overlay" class="hidden"></div>
+    <button id="pause-btn" class="hidden"><span class="pause-icon"></span></button>
+  </div>
+
+  <!-- Pause overlay -->
+  <div id="pause-overlay" class="screen hidden">
+    <h1>PAUSED</h1>
+    <div id="pause-buttons">
+      <button id="pause-continue-btn">Continue</button>
+      <button id="pause-newgame-btn">New Game</button>
+    </div>
   </div>
 
   <!-- Results overlay (shown on top of game screen) -->

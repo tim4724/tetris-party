@@ -250,6 +250,12 @@ function handleDisplayMessage(room, msg) {
     case MSG.PLAY_AGAIN:
       room.playAgain();
       break;
+    case MSG.PAUSE_GAME:
+      room.pauseGame();
+      break;
+    case MSG.RESUME_GAME:
+      room.resumeGame();
+      break;
   }
 }
 
@@ -278,6 +284,16 @@ function handleControllerMessage(room, playerId, msg) {
     case MSG.RETURN_TO_LOBBY:
       if (playerId === room.hostId) {
         room.returnToLobby();
+      }
+      break;
+    case MSG.PAUSE_GAME:
+      if (playerId === room.hostId) {
+        room.pauseGame();
+      }
+      break;
+    case MSG.RESUME_GAME:
+      if (playerId === room.hostId) {
+        room.resumeGame();
       }
       break;
   }

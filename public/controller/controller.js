@@ -45,6 +45,12 @@
   const playAgainBtn = document.getElementById('play-again-btn');
   const newGameBtn = document.getElementById('new-game-btn');
   const gameoverStatus = document.getElementById('gameover-status');
+  const pauseBtn = document.getElementById('pause-btn');
+  const pauseOverlay = document.getElementById('pause-overlay');
+  const pauseContinueBtn = document.getElementById('pause-continue-btn');
+  const pauseNewGameBtn = document.getElementById('pause-newgame-btn');
+  const pauseStatus = document.getElementById('pause-status');
+  const pauseButtons = document.getElementById('pause-buttons');
 
   // Screen management
   function showScreen(name) {
@@ -269,9 +275,16 @@
       case MSG.GAME_END:
         onGameEnd(data);
         break;
+      case MSG.GAME_PAUSED:
+        onGamePaused();
+        break;
+      case MSG.GAME_RESUMED:
+        onGameResumed();
+        break;
       case MSG.RETURN_TO_LOBBY:
         playerCount = data.playerCount || playerCount;
         gameScreen.classList.remove('dead');
+        gameScreen.classList.remove('paused');
         showLobbyUI();
         break;
       case MSG.ROOM_RESET:
@@ -311,9 +324,12 @@
     if (data.reconnected && (data.roomState === 'playing' || data.roomState === 'countdown')) {
       hideLobbyElements();
       gameScreen.classList.remove('dead');
+      gameScreen.classList.remove('paused');
       gameScreen.style.setProperty('--player-color', playerColor);
       removeKoOverlay();
       removeCountdownOverlay();
+      pauseOverlay.classList.add('hidden');
+      pauseBtn.classList.toggle('hidden', !isHost);
       showScreen('game');
       initTouchInput();
       return;
@@ -383,9 +399,12 @@
     linesDisplay.textContent = '0 lines';
     linesProgressFill.style.width = '0%';
     gameScreen.classList.remove('dead');
+    gameScreen.classList.remove('paused');
     gameScreen.style.setProperty('--player-color', playerColor);
     removeKoOverlay();
     removeCountdownOverlay();
+    pauseOverlay.classList.add('hidden');
+    pauseBtn.classList.toggle('hidden', !isHost);
     hideLobbyElements();
     showScreen('game');
     initTouchInput();
@@ -520,6 +539,43 @@
     }
     showScreen('waiting');
   }
+
+  // Pause
+  function onGamePaused() {
+    gameScreen.classList.add('paused');
+    pauseOverlay.classList.remove('hidden');
+    pauseBtn.classList.add('hidden');
+    if (isHost) {
+      pauseButtons.classList.remove('hidden');
+      pauseStatus.textContent = '';
+    } else {
+      pauseButtons.classList.add('hidden');
+      pauseStatus.textContent = 'Game paused by host';
+    }
+  }
+
+  function onGameResumed() {
+    gameScreen.classList.remove('paused');
+    pauseOverlay.classList.add('hidden');
+    if (isHost) {
+      pauseBtn.classList.remove('hidden');
+    }
+  }
+
+  pauseBtn.addEventListener('click', function () {
+    if (!isHost) return;
+    send(MSG.PAUSE_GAME);
+  });
+
+  pauseContinueBtn.addEventListener('click', function () {
+    if (!isHost) return;
+    send(MSG.RESUME_GAME);
+  });
+
+  pauseNewGameBtn.addEventListener('click', function () {
+    if (!isHost) return;
+    send(MSG.RETURN_TO_LOBBY);
+  });
 
   // KO overlay
   function showKoOverlay() {

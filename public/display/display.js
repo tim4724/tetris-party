@@ -31,15 +31,25 @@ const countdownOverlay = document.getElementById('countdown-overlay');
 const resultsList = document.getElementById('results-list');
 const playAgainBtn = document.getElementById('play-again-btn');
 const newGameResultsBtn = document.getElementById('new-game-results-btn');
+const pauseBtn = document.getElementById('pause-btn');
+const pauseOverlay = document.getElementById('pause-overlay');
+const pauseContinueBtn = document.getElementById('pause-continue-btn');
+const pauseNewGameBtn = document.getElementById('pause-newgame-btn');
 
 // --- Screen Management ---
 function showScreen(name) {
   currentScreen = name;
   welcomeScreen.classList.toggle('hidden', name !== 'welcome');
   lobbyScreen.classList.toggle('hidden', name !== 'lobby');
-  // Keep game screen visible behind results overlay
+  // Keep game screen visible behind results and pause overlays
   gameScreen.classList.toggle('hidden', name !== 'game' && name !== 'results');
   resultsScreen.classList.toggle('hidden', name !== 'results');
+  // Show pause button only during active game
+  pauseBtn.classList.toggle('hidden', name !== 'game');
+  // Hide pause overlay when switching away from game
+  if (name !== 'game') {
+    pauseOverlay.classList.add('hidden');
+  }
 
   if (name === 'game' || name === 'results') {
     initCanvas();
@@ -75,10 +85,10 @@ function calculateLayout() {
   const n = playerOrder.length;
   const w = window.innerWidth;
   const h = window.innerHeight;
-  const padding = 20;
+  const padding = 5;
 
-  // Each player needs: board (10 cells wide, 20 tall) + side panels (~5 cells each side)
-  const totalCellsWide = 10 + 5 + 5; // board + hold panel + next panel
+  // Each player needs: board (10 cells wide, 20 tall) + side panels (~3 cells each side)
+  const totalCellsWide = 10 + 3 + 3; // board + hold panel + next panel
   const totalCellsTall = 20 + 3;       // board + name + score
 
   // Compute cell size for a given grid arrangement
@@ -194,6 +204,12 @@ function handleMessage(msg) {
       break;
     case MSG.PLAYER_RECONNECTED:
       onPlayerReconnected(msg);
+      break;
+    case MSG.GAME_PAUSED:
+      onGamePaused();
+      break;
+    case MSG.GAME_RESUMED:
+      onGameResumed();
       break;
     case MSG.RETURN_TO_LOBBY:
       if (music) music.stop();
@@ -443,6 +459,33 @@ playAgainBtn.addEventListener('click', () => {
 
 // New Game — return to lobby so new players can join
 newGameResultsBtn.addEventListener('click', () => {
+  send(MSG.RETURN_TO_LOBBY);
+});
+
+// --- Pause ---
+function onGamePaused() {
+  pauseOverlay.classList.remove('hidden');
+  pauseBtn.classList.add('hidden');
+  if (music) music.stop();
+}
+
+function onGameResumed() {
+  pauseOverlay.classList.add('hidden');
+  if (currentScreen === 'game') {
+    pauseBtn.classList.remove('hidden');
+  }
+  if (music) music.start();
+}
+
+pauseBtn.addEventListener('click', () => {
+  send(MSG.PAUSE_GAME);
+});
+
+pauseContinueBtn.addEventListener('click', () => {
+  send(MSG.RESUME_GAME);
+});
+
+pauseNewGameBtn.addEventListener('click', () => {
   send(MSG.RETURN_TO_LOBBY);
 });
 
