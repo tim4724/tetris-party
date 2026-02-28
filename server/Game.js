@@ -113,7 +113,7 @@ class Game {
         const incoming = this.garbageManager.getIncomingGarbage(id);
         if (incoming && incoming.length > 0) {
           for (const g of incoming) {
-            board.addPendingGarbage(g.lines, g.gap);
+            board.addPendingGarbage(g.lines, g.gapColumn);
           }
         }
       }

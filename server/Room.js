@@ -122,15 +122,18 @@ class Room {
       // In game: mark disconnected, show QR on display for rejoin
       player.connected = false;
       player.ws = null;
+      this._sendDisconnectQR(playerId);
+    }
+  }
 
-      if (this.joinUrl) {
-        const rejoinUrl = `${this.joinUrl}?rejoin=${playerId}`;
-        this.getQRUrl(rejoinUrl).then((qrDataUrl) => {
-          this.sendToDisplay(MSG.PLAYER_DISCONNECTED, { playerId, qrDataUrl });
-        });
-      } else {
-        this.sendToDisplay(MSG.PLAYER_DISCONNECTED, { playerId, qrDataUrl: null });
-      }
+  _sendDisconnectQR(playerId) {
+    if (this.joinUrl) {
+      const rejoinUrl = `${this.joinUrl}?rejoin=${playerId}`;
+      this.getQRUrl(rejoinUrl).then((qrDataUrl) => {
+        this.sendToDisplay(MSG.PLAYER_DISCONNECTED, { playerId, qrDataUrl });
+      });
+    } else {
+      this.sendToDisplay(MSG.PLAYER_DISCONNECTED, { playerId, qrDataUrl: null });
     }
   }
 
@@ -227,11 +230,10 @@ class Room {
     const gameSettings = settings || {};
 
     this.startCountdown(() => {
+      // Include ALL players (even disconnected) so they keep their slot
       const gamePlayers = new Map();
       for (const [id, p] of this.players) {
-        if (p.connected) {
-          gamePlayers.set(id, { ws: p.ws });
-        }
+        gamePlayers.set(id, { ws: p.ws });
       }
 
       this.game = new Game(gamePlayers, gameMode, gameSettings, {
@@ -267,6 +269,13 @@ class Room {
       this.state = ROOM_STATE.PLAYING;
       this.broadcast(MSG.GAME_START, { mode: gameMode });
       this.game.start();
+
+      // Re-notify display about any still-disconnected players so QR overlays appear
+      for (const [id, p] of this.players) {
+        if (!p.connected) {
+          this._sendDisconnectQR(id);
+        }
+      }
     });
   }
 
