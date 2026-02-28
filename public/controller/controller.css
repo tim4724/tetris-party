@@ -13,7 +13,7 @@ html, body {
   -webkit-user-select: none;
   -webkit-touch-callout: none;
   position: fixed;
-  background: #0a0a1a;
+  background: #06060f;
   color: white;
   font-family: system-ui, -apple-system, sans-serif;
 }
@@ -37,17 +37,127 @@ html, body {
 
 /* Waiting screen */
 #waiting-screen {
-  gap: 12px;
+  gap: 0;
+  justify-content: flex-start;
+  padding-top: max(env(safe-area-inset-top), 10vh);
+  background:
+    radial-gradient(ellipse at 50% 30%, rgba(0, 100, 255, 0.06) 0%, transparent 60%),
+    radial-gradient(ellipse at 50% 80%, rgba(0, 255, 136, 0.04) 0%, transparent 50%);
+}
+
+/* Lobby entrance animations */
+@keyframes lobbyFadeDown {
+  from { opacity: 0; transform: translateY(-16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes lobbyFadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes lobbyFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes btnPulse {
+  0%, 100% { box-shadow: 0 0 16px rgba(0, 255, 136, 0.25); }
+  50% { box-shadow: 0 0 28px rgba(0, 255, 136, 0.45); }
+}
+
+#lobby-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(1.4rem, 7vw, 2.2rem);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  background: linear-gradient(135deg, #4444ff, #00ccff, #00ff88);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 12px rgba(0, 200, 255, 0.25));
+  animation: lobbyFadeDown 0.5s ease-out both;
+}
+
+#room-code-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
+  padding: 1.2rem 2rem;
+  border: 1px solid rgba(0, 200, 255, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  animation: lobbyFadeUp 0.5s 0.15s ease-out both;
+}
+
+#room-code-label {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.25em;
+  color: rgba(0, 200, 255, 0.4);
+  text-transform: uppercase;
+}
+
+#room-code-value {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(1.6rem, 9vw, 2.6rem);
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  color: #fff;
+}
+
+#player-count {
+  font-size: 14px;
+  color: #556;
+  margin-top: 12px;
+  animation: lobbyFadeIn 0.4s 0.3s ease-out both;
+}
+
+#start-btn {
+  margin-top: auto;
+  padding: 1rem 3rem;
+  border: none;
+  border-radius: 10px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  background: #1a1a2a;
+  color: #445;
+  cursor: default;
+  transition: all 0.25s ease;
+  animation: lobbyFadeUp 0.5s 0.4s ease-out both;
+}
+
+#start-btn:not(:disabled) {
+  background: linear-gradient(180deg, #00ff88 0%, #00dd77 100%);
+  color: #003d1f;
+  cursor: pointer;
+  animation: lobbyFadeUp 0.5s 0.4s ease-out both, btnPulse 2.5s 1s ease-in-out infinite;
+}
+
+#start-btn:not(:disabled):active {
+  transform: scale(0.95);
+  animation: none;
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
 }
 
 #status-text {
-  font-size: 24px;
+  font-size: 15px;
   font-weight: 600;
+  color: #889;
+  margin-top: auto;
+  animation: lobbyFadeIn 0.4s 0.3s ease-out both;
 }
 
 #status-detail {
-  font-size: 16px;
-  color: #888;
+  font-size: 13px;
+  color: #445;
+  margin-top: 4px;
+  margin-bottom: auto;
 }
 
 /* Game screen */

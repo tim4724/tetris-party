@@ -1,13 +1,15 @@
 :root {
-  --bg-primary: #0a0a1a;
-  --bg-secondary: #0f0f23;
-  --bg-card: #1a1a2e;
+  --bg-primary: #06060f;
+  --bg-secondary: #0c0c1a;
+  --bg-card: #12122a;
   --text-primary: #e0e0ff;
-  --text-secondary: #8888aa;
+  --text-secondary: #6a6a88;
   --accent: #4444ff;
-  --border: #333366;
+  --border: #1e1e44;
   --success: #00ff88;
   --danger: #ff4444;
+  --glow-cyan: rgba(0, 200, 255, 0.15);
+  --glow-green: rgba(0, 255, 136, 0.3);
 }
 
 * {
@@ -22,7 +24,7 @@ html, body {
   overflow: hidden;
   background: var(--bg-primary);
   color: var(--text-primary);
-  font-family: 'Courier New', Courier, monospace;
+  font-family: system-ui, -apple-system, sans-serif;
 }
 
 .screen {
@@ -38,73 +40,26 @@ html, body {
   display: none;
 }
 
-/* Lobby Screen */
-#lobby-screen h1 {
-  font-size: clamp(2rem, 5vw, 4rem);
-  letter-spacing: 0.3em;
-  margin-bottom: 1.5rem;
-  background: linear-gradient(135deg, #4444ff, #00ccff, #00ff88);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-shadow: none;
+/* ============================================
+   Lobby Screen
+   ============================================ */
+#lobby-screen {
+  background:
+    radial-gradient(ellipse at 50% 20%, rgba(68, 68, 255, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 90%, rgba(0, 255, 136, 0.04) 0%, transparent 40%);
+  gap: 0;
+  padding: 4vh 2rem 4vh;
 }
 
-#qr-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 1.5rem;
+/* Entrance animations */
+@keyframes fadeDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-#qr-code {
-  width: 200px;
-  height: 200px;
-  border: 3px solid var(--border);
-  border-radius: 8px;
-  background: #fff;
-  padding: 8px;
-}
-
-#room-code {
-  font-size: 2.5rem;
-  font-weight: bold;
-  letter-spacing: 0.3em;
-  margin-top: 0.75rem;
-  color: var(--text-primary);
-}
-
-#join-url {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  margin-top: 0.25rem;
-}
-
-#player-list {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-  justify-content: center;
-  margin-bottom: 1.5rem;
-  min-height: 60px;
-}
-
-.player-card {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  background: var(--bg-card);
-  border: 2px solid var(--border);
-  font-size: 1.1rem;
-  animation: fadeIn 0.3s ease;
-}
-
-.player-card .color-dot {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fadeIn {
@@ -112,26 +67,114 @@ html, body {
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes btnPulse {
+  0%, 100% { box-shadow: 0 0 20px var(--glow-green); }
+  50% { box-shadow: 0 0 36px rgba(0, 255, 136, 0.5); }
+}
+
+#lobby-screen h1 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(2rem, 5vh, 5rem);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  background: linear-gradient(135deg, #4444ff, #00ccff, #00ff88);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 18px rgba(0, 200, 255, 0.3));
+  animation: fadeDown 0.6s ease-out both;
+}
+
+#qr-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: auto;
+  animation: fadeUp 0.6s 0.15s ease-out both;
+}
+
+#qr-code {
+  width: clamp(140px, 24vh, 300px);
+  height: clamp(140px, 24vh, 300px);
+  border: 1px solid rgba(0, 200, 255, 0.15);
+  border-radius: clamp(8px, 1vh, 16px);
+  background: #fff;
+  padding: clamp(6px, 1vh, 14px);
+  box-shadow: 0 0 24px rgba(0, 200, 255, 0.08);
+}
+
+#room-code {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(1.5rem, 3.5vh, 4rem);
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  margin-top: clamp(0.4rem, 1vh, 1rem);
+  color: #fff;
+}
+
+#join-url {
+  font-size: clamp(0.7rem, 1.4vh, 1.1rem);
+  color: var(--text-secondary);
+  margin-top: 0.3rem;
+  letter-spacing: 0.02em;
+}
+
+#player-list {
+  display: flex;
+  gap: clamp(0.5rem, 1vw, 1rem);
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: auto;
+  min-height: clamp(36px, 5vh, 60px);
+  animation: fadeIn 0.4s 0.3s ease-out both;
+}
+
+.player-card {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.3rem, 0.5vw, 0.6rem);
+  padding: clamp(0.3rem, 0.8vh, 0.7rem) clamp(0.6rem, 1.2vw, 1.4rem);
+  border-radius: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(0.75rem, 1.5vh, 1.2rem);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  animation: fadeIn 0.3s ease both;
+}
+
+.player-card .color-dot {
+  width: clamp(10px, 1.4vh, 18px);
+  height: clamp(10px, 1.4vh, 18px);
+  border-radius: 50%;
+  box-shadow: 0 0 6px currentColor;
+}
+
 #mode-select {
   display: flex;
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
+  gap: clamp(0.5rem, 1vw, 1rem);
+  margin-top: auto;
+  margin-bottom: clamp(0.8rem, 1.5vh, 1.5rem);
+  animation: fadeUp 0.5s 0.35s ease-out both;
 }
 
 .mode-btn {
-  padding: 0.6rem 1.5rem;
-  border: 2px solid var(--border);
-  border-radius: 6px;
+  padding: clamp(0.4rem, 0.9vh, 0.8rem) clamp(1rem, 2vw, 2.5rem);
+  border: 1px solid var(--border);
+  border-radius: 8px;
   background: var(--bg-secondary);
   color: var(--text-secondary);
-  font-family: inherit;
-  font-size: 1rem;
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(0.7rem, 1.4vh, 1.1rem);
+  font-weight: 500;
+  letter-spacing: 0.04em;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .mode-btn:hover {
-  border-color: var(--accent);
+  border-color: rgba(68, 68, 255, 0.5);
   color: var(--text-primary);
 }
 
@@ -139,33 +182,39 @@ html, body {
   border-color: var(--accent);
   background: var(--accent);
   color: #fff;
+  box-shadow: 0 0 12px rgba(68, 68, 255, 0.3);
 }
 
 #start-btn {
-  padding: 1rem 3rem;
+  padding: clamp(0.7rem, 1.4vh, 1.3rem) clamp(2rem, 4vw, 6rem);
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   background: var(--bg-card);
   color: var(--text-secondary);
-  font-family: inherit;
-  font-size: 1.3rem;
-  font-weight: bold;
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(1rem, 2vh, 1.6rem);
+  font-weight: 700;
+  letter-spacing: 0.08em;
   cursor: not-allowed;
-  transition: all 0.2s ease;
+  transition: all 0.25s ease;
+  animation: fadeUp 0.5s 0.45s ease-out both;
 }
 
 #start-btn:not(:disabled) {
-  background: var(--success);
-  color: #000;
+  background: linear-gradient(180deg, #00ff88 0%, #00dd77 100%);
+  color: #003d1f;
   cursor: pointer;
+  animation: fadeUp 0.5s 0.45s ease-out both, btnPulse 2.5s 1.2s ease-in-out infinite;
 }
 
 #start-btn:not(:disabled):hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
+  transform: scale(1.04);
+  box-shadow: 0 0 32px rgba(0, 255, 136, 0.5);
 }
 
-/* Game Screen */
+/* ============================================
+   Game Screen
+   ============================================ */
 #game-screen {
   position: relative;
   padding: 0;
@@ -186,11 +235,12 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12rem;
-  font-weight: bold;
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(6rem, 15vh, 14rem);
+  font-weight: 900;
   color: #fff;
   text-shadow: 0 0 40px rgba(68, 68, 255, 0.8), 0 0 80px rgba(68, 68, 255, 0.4);
-  background: rgba(10, 10, 26, 0.7);
+  background: rgba(6, 6, 15, 0.75);
   z-index: 10;
   animation: countPulse 0.5s ease;
 }
@@ -205,50 +255,61 @@ html, body {
   100% { transform: scale(0.95); opacity: 1; }
 }
 
-/* Results Screen */
+/* ============================================
+   Results Screen
+   ============================================ */
+#results-screen {
+  background:
+    radial-gradient(ellipse at 50% 30%, rgba(255, 215, 0, 0.04) 0%, transparent 50%);
+}
+
 #results-screen h1 {
-  font-size: 3rem;
-  letter-spacing: 0.3em;
-  margin-bottom: 2rem;
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(1.6rem, 4vh, 3.5rem);
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  margin-bottom: clamp(1rem, 3vh, 3rem);
   color: var(--text-primary);
 }
 
 #results-list {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  margin-bottom: 2rem;
+  gap: clamp(0.4rem, 0.8vh, 0.8rem);
+  margin-bottom: clamp(1rem, 3vh, 3rem);
   width: 90%;
-  max-width: 600px;
+  max-width: 700px;
 }
 
 .result-row {
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 1rem 1.5rem;
-  border-radius: 8px;
+  padding: clamp(0.6rem, 1.2vh, 1.2rem) clamp(1rem, 2vw, 2rem);
+  border-radius: 10px;
   background: var(--bg-card);
-  border: 2px solid var(--border);
-  animation: fadeIn 0.4s ease;
+  border: 1px solid var(--border);
+  animation: fadeIn 0.4s ease both;
 }
 
 .result-row.rank-1 {
-  border-color: #ffd700;
-  background: linear-gradient(135deg, var(--bg-card), rgba(255, 215, 0, 0.1));
+  border-color: rgba(255, 215, 0, 0.4);
+  background: linear-gradient(135deg, var(--bg-card), rgba(255, 215, 0, 0.08));
+  box-shadow: 0 0 16px rgba(255, 215, 0, 0.08);
 }
 
 .result-row.rank-2 {
-  border-color: #c0c0c0;
+  border-color: rgba(192, 192, 192, 0.3);
 }
 
 .result-row.rank-3 {
-  border-color: #cd7f32;
+  border-color: rgba(205, 127, 50, 0.3);
 }
 
 .result-rank {
-  font-size: 1.8rem;
-  font-weight: bold;
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(1.2rem, 2.5vh, 2.2rem);
+  font-weight: 700;
   width: 2.5rem;
   text-align: center;
 }
@@ -259,13 +320,15 @@ html, body {
 
 .result-name {
   flex: 1;
-  font-size: 1.2rem;
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(0.85rem, 1.8vh, 1.3rem);
+  font-weight: 500;
 }
 
 .result-stats {
   display: flex;
   gap: 1.5rem;
-  font-size: 0.9rem;
+  font-size: clamp(0.75rem, 1.4vh, 1rem);
   color: var(--text-secondary);
 }
 
@@ -274,13 +337,15 @@ html, body {
 }
 
 #lobby-btn {
-  padding: 0.8rem 2.5rem;
-  border: 2px solid var(--accent);
+  padding: clamp(0.5rem, 1vh, 1rem) clamp(1.5rem, 3vw, 3rem);
+  border: 1px solid var(--accent);
   border-radius: 8px;
   background: transparent;
   color: var(--accent);
-  font-family: inherit;
-  font-size: 1.1rem;
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(0.8rem, 1.5vh, 1.1rem);
+  font-weight: 700;
+  letter-spacing: 0.06em;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -288,4 +353,5 @@ html, body {
 #lobby-btn:hover {
   background: var(--accent);
   color: #fff;
+  box-shadow: 0 0 16px rgba(68, 68, 255, 0.3);
 }

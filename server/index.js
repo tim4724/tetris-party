@@ -184,7 +184,9 @@ async function handleNewConnection(ws, msg) {
       send(ws, MSG.JOINED, {
         playerId: result.playerId,
         playerColor: result.color,
-        reconnectToken: result.reconnectToken
+        reconnectToken: result.reconnectToken,
+        isHost: result.isHost,
+        playerCount: room.players.size
       });
       console.log(`Player ${result.playerId} joined room ${msg.roomCode}`);
     }
@@ -230,6 +232,11 @@ function handleControllerMessage(room, playerId, msg) {
       break;
     case MSG.SOFT_DROP_END:
       room.handleSoftDropEnd(playerId);
+      break;
+    case MSG.START_GAME:
+      if (playerId === room.hostId) {
+        room.startGame(msg.mode, msg.settings);
+      }
       break;
   }
 }

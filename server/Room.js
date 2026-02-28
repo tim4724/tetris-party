@@ -23,6 +23,7 @@ class Room {
     this.game = null;
     this.nextPlayerId = 1;
     this.countdownTimer = null;
+    this.hostId = null;
 
     activeRoomCodes.add(roomCode);
   }
@@ -56,6 +57,8 @@ class Room {
     const playerId = this.nextPlayerId++;
     const color = PLAYER_COLORS[(playerId - 1) % PLAYER_COLORS.length];
     const reconnectToken = generateToken();
+    const isHost = this.hostId === null;
+    if (isHost) this.hostId = playerId;
 
     this.players.set(playerId, {
       ws,
@@ -74,7 +77,12 @@ class Room {
       playerCount: this.players.size
     });
 
-    return { playerId, color, reconnectToken };
+    // Broadcast lobby update to all controllers
+    this.broadcastToControllers(MSG.LOBBY_UPDATE, {
+      playerCount: this.players.size
+    });
+
+    return { playerId, color, reconnectToken, isHost };
   }
 
   removePlayer(playerId) {
@@ -83,6 +91,25 @@ class Room {
 
     if (this.state === ROOM_STATE.LOBBY) {
       this.players.delete(playerId);
+
+      if (playerId === this.hostId) {
+        // Host disconnected — cancel lobby for all remaining controllers
+        this.hostId = null;
+        this.broadcastToControllers(MSG.ERROR, { code: 'HOST_DISCONNECTED', message: 'Host disconnected' });
+        // Close all remaining controller websockets
+        for (const [, p] of this.players) {
+          if (p.ws) {
+            try { p.ws.close(); } catch (e) { /* ignore */ }
+          }
+        }
+        this.players.clear();
+      } else {
+        // Non-host left — update lobby
+        this.broadcastToControllers(MSG.LOBBY_UPDATE, {
+          playerCount: this.players.size
+        });
+      }
+
       this.sendToDisplay(MSG.PLAYER_LEFT, {
         playerId,
         playerCount: this.players.size
@@ -127,6 +154,8 @@ class Room {
   }
 
   startGame(mode, settings) {
+    if (this.state !== ROOM_STATE.LOBBY) return;
+
     if (this.players.size < 1) {
       this.sendToDisplay(MSG.ERROR, { message: 'Need at least 1 player' });
       return;
@@ -236,6 +265,14 @@ class Room {
     const player = this.players.get(playerId);
     if (player && player.connected && player.ws) {
       send(player.ws, type, data);
+    }
+  }
+
+  broadcastToControllers(type, data) {
+    for (const [, player] of this.players) {
+      if (player.connected && player.ws) {
+        send(player.ws, type, data);
+      }
     }
   }
 

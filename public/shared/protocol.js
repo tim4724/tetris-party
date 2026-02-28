@@ -12,6 +12,7 @@ const MSG = {
   // Server → Controller
   JOINED: 'joined',
   INPUT_ACK: 'input_ack',
+  LOBBY_UPDATE: 'lobby_update',
   GAME_START: 'game_start',
   COUNTDOWN: 'countdown',
   PLAYER_STATE: 'player_state',

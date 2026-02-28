@@ -14,11 +14,19 @@
   const RECONNECT_INTERVAL = 2000;
   let reconnectTimer = null;
   let hintHidden = false;
+  let isHost = false;
+  let playerCount = 0;
+  let gameCancelled = false;
 
   // DOM refs
   const waitingScreen = document.getElementById('waiting-screen');
   const gameScreen = document.getElementById('game-screen');
   const gameoverScreen = document.getElementById('gameover-screen');
+  const lobbyTitle = document.getElementById('lobby-title');
+  const roomCodeBox = document.getElementById('room-code-box');
+  const roomCodeValue = document.getElementById('room-code-value');
+  const playerCountEl = document.getElementById('player-count');
+  const startBtn = document.getElementById('start-btn');
   const statusText = document.getElementById('status-text');
   const statusDetail = document.getElementById('status-detail');
   const playerNameEl = document.getElementById('player-name');
@@ -45,8 +53,6 @@
     statusDetail.textContent = 'Scan a QR code or use a join link';
     return;
   }
-
-  statusDetail.textContent = 'Room: ' + roomCode;
 
   function vibrate(pattern) {
     if (!navigator.vibrate) return;
@@ -100,7 +106,7 @@
     };
 
     ws.onclose = function () {
-      if (currentScreen === 'gameover') return;
+      if (currentScreen === 'gameover' || gameCancelled) return;
       attemptReconnect();
     };
 
@@ -137,6 +143,9 @@
       case MSG.JOINED:
         onJoined(data);
         break;
+      case MSG.LOBBY_UPDATE:
+        onLobbyUpdate(data);
+        break;
       case MSG.GAME_START:
         onGameStart();
         break;
@@ -164,6 +173,9 @@
   function onJoined(data) {
     playerId = data.playerId;
     playerColor = data.playerColor || PLAYER_COLORS[playerId - 1] || PLAYER_COLORS[0];
+    isHost = !!data.isHost;
+    playerCount = data.playerCount || 1;
+    gameCancelled = false;
 
     if (data.reconnectToken) {
       sessionStorage.setItem('reconnectToken_' + roomCode, data.reconnectToken);
@@ -173,9 +185,40 @@
     playerNameEl.textContent = name;
     playerIndicator.style.background = playerColor;
 
-    statusText.textContent = 'Joined!';
-    statusDetail.textContent = 'Waiting for game to start...';
+    // Show lobby UI
+    lobbyTitle.classList.remove('hidden');
+    roomCodeBox.classList.remove('hidden');
+    roomCodeValue.textContent = roomCode;
+    playerCountEl.classList.remove('hidden');
+    updatePlayerCount();
+
+    if (isHost) {
+      startBtn.classList.remove('hidden');
+      startBtn.disabled = false;
+      updateStartButton();
+      statusText.textContent = '';
+      statusDetail.textContent = '';
+    } else {
+      startBtn.classList.add('hidden');
+      statusText.textContent = 'Waiting for host to start...';
+      statusDetail.textContent = '';
+    }
+
     showScreen('waiting');
+  }
+
+  function onLobbyUpdate(data) {
+    playerCount = data.playerCount;
+    updatePlayerCount();
+    if (isHost) updateStartButton();
+  }
+
+  function updatePlayerCount() {
+    playerCountEl.textContent = playerCount + (playerCount === 1 ? ' player' : ' players');
+  }
+
+  function updateStartButton() {
+    startBtn.textContent = 'START (' + playerCount + (playerCount === 1 ? ' player)' : ' players)');
   }
 
   function onGameStart() {
@@ -187,8 +230,14 @@
     gameScreen.classList.remove('dead');
     hintHidden = false;
     removeCountdownOverlay();
-    showScreen('game');
 
+    // Hide lobby elements
+    lobbyTitle.classList.add('hidden');
+    roomCodeBox.classList.add('hidden');
+    playerCountEl.classList.add('hidden');
+    startBtn.classList.add('hidden');
+
+    showScreen('game');
     initTouchInput();
   }
 
@@ -259,6 +308,17 @@
   }
 
   function onError(data) {
+    if (data.code === 'HOST_DISCONNECTED') {
+      gameCancelled = true;
+      lobbyTitle.classList.add('hidden');
+      roomCodeBox.classList.add('hidden');
+      playerCountEl.classList.add('hidden');
+      startBtn.classList.add('hidden');
+      statusText.textContent = 'Game Cancelled';
+      statusDetail.textContent = 'Host disconnected. Refresh to rejoin.';
+      showScreen('waiting');
+      return;
+    }
     statusText.textContent = 'Error';
     statusDetail.textContent = data.message || 'Unknown error';
     showScreen('waiting');
@@ -298,6 +358,12 @@
       }
     });
   }
+
+  // Start button (host only)
+  startBtn.addEventListener('click', function () {
+    if (!isHost || startBtn.disabled) return;
+    send(MSG.START_GAME, { mode: MODE.COMPETITIVE });
+  });
 
   // Start connection
   connect();
