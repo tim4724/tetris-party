@@ -46,8 +46,9 @@ function showScreen(name) {
   // Keep game screen visible behind results and pause overlays
   gameScreen.classList.toggle('hidden', name !== 'game' && name !== 'results');
   resultsScreen.classList.toggle('hidden', name !== 'results');
-  // Show toolbar only during active game
-  gameToolbar.classList.toggle('hidden', name !== 'game');
+  // Keep fullscreen available after entering the display flow; pause remains game-only.
+  gameToolbar.classList.toggle('hidden', name === 'welcome');
+  pauseBtn.classList.toggle('hidden', name !== 'game');
   // Hide pause overlay when switching away from game
   if (name !== 'game') {
     pauseOverlay.classList.add('hidden');
