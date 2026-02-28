@@ -207,7 +207,8 @@ async function handleNewConnection(ws, msg) {
         playerColor: player.color,
         reconnected: true,
         isHost: playerId === room.hostId,
-        playerCount: room.players.size
+        playerCount: room.players.size,
+        roomState: room.state
       });
       console.log(`Player ${playerId} reconnected to room ${msg.roomCode}`);
     } else {

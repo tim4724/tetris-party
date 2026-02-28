@@ -8,8 +8,7 @@ const {
   RECONNECT_GRACE_MS,
   COUNTDOWN_SECONDS
 } = require('./constants.js');
-
-const PLAYER_COLORS = ['#00F0F0', '#F0A000', '#0000F0', '#F00000'];
+const { PLAYER_COLORS } = require('../public/shared/colors.js');
 
 // Track active room codes to avoid collisions
 const activeRoomCodes = new Set();
