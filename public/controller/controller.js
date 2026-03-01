@@ -37,12 +37,8 @@
   const playerNameEl = document.getElementById('player-name');
   const playerIndicator = document.getElementById('player-indicator');
   const playerIdentityName = document.getElementById('player-identity-name');
-  const scoreDisplay = document.getElementById('score-display');
   const touchArea = document.getElementById('touch-area');
   const feedbackLayer = document.getElementById('feedback-layer');
-  const levelDisplay = document.getElementById('level-display');
-  const linesDisplay = document.getElementById('lines-display');
-  const linesProgressFill = document.getElementById('lines-progress-fill');
   const gameoverTitle = document.getElementById('gameover-title');
   const resultsList = document.getElementById('results-list');
   const gameoverButtons = document.getElementById('gameover-buttons');
@@ -103,7 +99,6 @@
 
   // --- Web Audio sound effects (works on iOS where vibrate doesn't) ---
   let audioCtx = null;
-  let lastLines = 0;
 
   function getAudioCtx() {
     if (!audioCtx) {
@@ -423,11 +418,7 @@
     vibrate([15, 25, 20]);
     playTick();
     inputSeq = 0;
-    lastLines = 0;
-    scoreDisplay.textContent = '0';
-    levelDisplay.textContent = 'LVL 1';
-    linesDisplay.textContent = '0 lines';
-    linesProgressFill.style.width = '0%';
+    onPlayerState._lastLines = 0;
     gameScreen.classList.remove('dead');
     gameScreen.classList.remove('paused');
     gameScreen.style.setProperty('--player-color', playerColor);
@@ -466,20 +457,10 @@
   }
 
   function onPlayerState(data) {
-    if (data.score !== undefined) {
-      scoreDisplay.textContent = data.score;
+    if (data.lines !== undefined && data.lines > (onPlayerState._lastLines || 0)) {
+      playLineClear(data.lines - (onPlayerState._lastLines || 0));
     }
-    if (data.level !== undefined) {
-      levelDisplay.textContent = 'LVL ' + data.level;
-    }
-    if (data.lines !== undefined) {
-      if (data.lines > lastLines) {
-        playLineClear(data.lines - lastLines);
-      }
-      lastLines = data.lines;
-      linesDisplay.textContent = data.lines + (data.lines === 1 ? ' line' : ' lines');
-      linesProgressFill.style.width = ((data.lines % 10) / 10 * 100) + '%';
-    }
+    if (data.lines !== undefined) onPlayerState._lastLines = data.lines;
     if (data.alive === false && !gameScreen.classList.contains('dead')) {
       gameScreen.classList.add('dead');
       showKoOverlay();

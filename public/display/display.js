@@ -415,13 +415,9 @@ function updatePlayerList() {
       const card = document.createElement('div');
       card.className = 'player-card empty';
 
-      const dot = document.createElement('span');
-      dot.className = 'color-dot';
-
       const name = document.createElement('span');
       name.textContent = SLOT_LABELS[i];
 
-      card.appendChild(dot);
       card.appendChild(name);
       playerListEl.appendChild(card);
     }
@@ -430,8 +426,7 @@ function updatePlayerList() {
   // Reconcile each slot in place
   for (let i = 0; i < MAX_SLOTS; i++) {
     const card = playerListEl.children[i];
-    const dot = card.querySelector('.color-dot');
-    const nameEl = card.querySelector('span:last-child');
+    const nameEl = card.querySelector('span');
     const playerId = playerOrder[i];
     const info = playerId ? players.get(playerId) : null;
     const wasEmpty = card.classList.contains('empty');
@@ -439,7 +434,6 @@ function updatePlayerList() {
     if (info) {
       const color = info.playerColor || PLAYER_COLORS[info.playerIndex] || '#fff';
       card.style.setProperty('--player-color', color);
-      dot.style.backgroundColor = color;
       nameEl.textContent = info.playerName || PLAYER_NAMES[info.playerIndex] || 'Player';
       card.classList.remove('empty');
       card.dataset.playerId = playerId;
@@ -452,7 +446,6 @@ function updatePlayerList() {
       }
     } else {
       card.style.removeProperty('--player-color');
-      dot.style.backgroundColor = '';
       nameEl.textContent = SLOT_LABELS[i];
       card.classList.add('empty');
       card.classList.remove('join-pop');

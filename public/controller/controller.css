@@ -318,7 +318,7 @@ html, body {
   padding: 0;
 }
 
-/* Status bar — two-row layout with accent stripe */
+/* Status bar — single-row with accent stripe */
 #status-bar {
   display: flex;
   align-items: stretch;
@@ -339,19 +339,13 @@ html, body {
   background: var(--player-color, #888);
 }
 
-#status-bar-rows {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-width: 0;
-  padding: 10px 16px 8px;
-  gap: 4px;
-}
-
-#status-bar-main {
+#status-bar-content {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex: 1;
+  min-width: 0;
+  padding: 12px 16px;
 }
 
 #player-name {
@@ -371,48 +365,6 @@ html, body {
   background: #888;
   flex-shrink: 0;
   box-shadow: 0 0 5px currentColor;
-}
-
-#score-display {
-  margin-left: auto;
-  font-family: 'Orbitron', sans-serif;
-  font-variant-numeric: tabular-nums;
-  font-weight: 700;
-  font-size: 28px;
-  letter-spacing: 0.02em;
-}
-
-#status-bar-secondary {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 15px;
-  color: #556;
-}
-
-#level-display {
-  font-weight: 600;
-  letter-spacing: 0.04em;
-}
-
-#lines-display {
-  font-variant-numeric: tabular-nums;
-}
-
-#lines-progress {
-  flex: 1;
-  height: 5px;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-#lines-progress-fill {
-  height: 100%;
-  width: 0%;
-  background: var(--player-color, #888);
-  border-radius: 2px;
-  transition: width 0.3s ease;
 }
 
 #touch-area {
@@ -809,11 +761,11 @@ html, body {
 
 /* Pause button */
 #pause-btn {
-  margin-left: 10px;
-  width: 32px;
-  height: 32px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 6px;
+  margin-left: auto;
+  width: 48px;
+  height: 48px;
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
   background: rgba(255, 255, 255, 0.06);
   cursor: pointer;
   display: flex;
@@ -825,16 +777,16 @@ html, body {
 
 #pause-btn .pause-icon {
   display: flex;
-  gap: 2px;
+  gap: 3px;
 }
 
 #pause-btn .pause-icon::before,
 #pause-btn .pause-icon::after {
   content: '';
-  width: 3px;
-  height: 12px;
+  width: 4px;
+  height: 18px;
   background: rgba(255, 255, 255, 0.5);
-  border-radius: 1px;
+  border-radius: 1.5px;
 }
 
 #pause-btn:active {

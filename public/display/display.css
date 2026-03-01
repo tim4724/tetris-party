@@ -190,7 +190,6 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: clamp(0.4rem, 0.7vw, 0.8rem);
   padding: clamp(0.6rem, 1.2vh, 1rem) clamp(1.2rem, 2vw, 2.2rem);
   border-radius: var(--radius-md);
   background: var(--bg-card);
@@ -200,29 +199,16 @@ html, body {
   font-size: clamp(0.9rem, 2vh, 1.4rem);
   font-weight: 600;
   letter-spacing: 0.05em;
-  color: var(--text-primary);
+  color: var(--player-color, var(--text-primary));
   min-width: clamp(100px, 12vw, 180px);
-}
-
-.player-card .color-dot {
-  width: clamp(12px, 1.8vh, 22px);
-  height: clamp(12px, 1.8vh, 22px);
-  border-radius: 50%;
-  flex-shrink: 0;
-  box-shadow: 0 0 8px currentColor;
 }
 
 .player-card.empty {
   background: transparent;
   border: 2px dashed rgba(255, 255, 255, 0.1);
   box-shadow: none;
+  color: var(--text-secondary);
   opacity: 0.35;
-}
-
-.player-card.empty .color-dot {
-  background: transparent !important;
-  border: 2px dashed rgba(255, 255, 255, 0.25);
-  box-shadow: none;
 }
 
 @keyframes slotPopIn {
