@@ -347,6 +347,7 @@ function renderTetrisQR(canvas, qrMatrix) {
 
 function onRoomCreated(msg) {
   // Reset local state — new room has no players
+  if (music) music.stop();
   players.clear();
   playerOrder = [];
   playerIndexCounter = 0;
