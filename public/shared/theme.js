@@ -70,6 +70,9 @@ const THEME = Object.freeze({
       text: '#ff4444',
       glow: 'rgba(255, 50, 50, 0.6)',
     }),
+    btn: Object.freeze({
+      greenText: '#003d1f',
+    }),
     // Animation-specific named colors
     tetris:  '#00ffff',
     triple:  '#ffaa00',

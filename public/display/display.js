@@ -168,7 +168,12 @@ function connect() {
   };
 
   ws.onmessage = function(event) {
-    const msg = JSON.parse(event.data);
+    let msg;
+    try {
+      msg = JSON.parse(event.data);
+    } catch (_) {
+      return;
+    }
     handleMessage(msg);
   };
 
@@ -241,44 +246,6 @@ function handleMessage(msg) {
 }
 
 // --- Tetris QR Helpers (standalone, renders to separate canvas) ---
-function _hexToRgb(hex) {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result ? {
-    r: parseInt(result[1], 16),
-    g: parseInt(result[2], 16),
-    b: parseInt(result[3], 16)
-  } : null;
-}
-
-function _lighten(hex, percent) {
-  const rgb = _hexToRgb(hex);
-  if (!rgb) return hex;
-  const f = 1 + percent / 100;
-  return `rgb(${Math.min(255, Math.round(rgb.r * f))}, ${Math.min(255, Math.round(rgb.g * f))}, ${Math.min(255, Math.round(rgb.b * f))})`;
-}
-
-function _darken(hex, percent) {
-  const rgb = _hexToRgb(hex);
-  if (!rgb) return hex;
-  const f = 1 - percent / 100;
-  return `rgb(${Math.round(rgb.r * f)}, ${Math.round(rgb.g * f)}, ${Math.round(rgb.b * f)})`;
-}
-
-function _roundRect(ctx, x, y, w, h, r) {
-  r = Math.min(r, w / 2, h / 2);
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + w - r, y);
-  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-  ctx.lineTo(x + w, y + h - r);
-  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-  ctx.lineTo(x + r, y + h);
-  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-  ctx.lineTo(x, y + r);
-  ctx.quadraticCurveTo(x, y, x + r, y);
-  ctx.closePath();
-}
-
 function renderTetrisQR(canvas, qrMatrix) {
   if (!qrMatrix || !qrMatrix.modules) return;
   const { size, modules } = qrMatrix;
@@ -299,7 +266,7 @@ function renderTetrisQR(canvas, qrMatrix) {
   ctx.clearRect(0, 0, totalPx, totalPx);
 
   // White background
-  ctx.fillStyle = '#ffffff';
+  ctx.fillStyle = THEME.color.text.white;
   ctx.fillRect(0, 0, totalPx, totalPx);
 
   const color = THEME.color.bg.card; // #12122a — dark navy from UI theme
@@ -318,11 +285,11 @@ function renderTetrisQR(canvas, qrMatrix) {
 
       // Rounded rect with vertical gradient
       const grad = ctx.createLinearGradient(x, y, x, y + s);
-      grad.addColorStop(0, _lighten(color, 15));
-      grad.addColorStop(1, _darken(color, 10));
+      grad.addColorStop(0, lightenColor(color, 15));
+      grad.addColorStop(1, darkenColor(color, 10));
 
       ctx.fillStyle = grad;
-      _roundRect(ctx, x + inset, y + inset, s - inset * 2, s - inset * 2, radius);
+      roundRect(ctx, x + inset, y + inset, s - inset * 2, s - inset * 2, radius);
       ctx.fill();
 
       // Top highlight
@@ -866,7 +833,7 @@ function renderLoop(timestamp) {
         const outerY = groupY;
 
         // Rounded white background (matches lobby QR style)
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = THEME.color.text.white;
         ctx.beginPath();
         ctx.roundRect(outerX, outerY, outerSize, outerSize, radius);
         ctx.fill();

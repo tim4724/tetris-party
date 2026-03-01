@@ -187,7 +187,7 @@ class UIRenderer {
 
     // Score text with subtle glow
     const scoreStr = String(playerState.score || 0).padStart(8, '0');
-    const rgb = this._hexToRgb(this.accentColor);
+    const rgb = hexToRgb(this.accentColor);
     if (rgb) {
       ctx.shadowColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.3)`;
       ctx.shadowBlur = 8;
@@ -233,7 +233,7 @@ class UIRenderer {
     for (let i = 0; i < rows; i++) {
       const y = meter.y + this.boardHeight - (i + 1) * meter.cellSize;
       ctx.fillStyle = THEME.color.garbage;
-      this._roundRect(meter.x + inset, y + inset, meter.cellSize - inset * 2, meter.cellSize - inset * 2, r);
+      roundRect(ctx, meter.x + inset, y + inset, meter.cellSize - inset * 2, meter.cellSize - inset * 2, r);
       ctx.fill();
       ctx.fillStyle = `rgba(255, 255, 255, ${THEME.opacity.faint})`;
       ctx.fillRect(meter.x + inset + 1, y + inset + 1, meter.cellSize - inset * 2 - 2, 1);
@@ -260,7 +260,7 @@ class UIRenderer {
         ctx.save();
         ctx.globalAlpha = alpha;
         ctx.fillStyle = effect.color;
-        this._roundRect(meter.x + inset, y + inset, meter.cellSize - inset * 2, meter.cellSize - inset * 2, r);
+        roundRect(ctx, meter.x + inset, y + inset, meter.cellSize - inset * 2, meter.cellSize - inset * 2, r);
         ctx.fill();
         ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
         ctx.fillRect(meter.x + inset + 1, y + inset + 1, meter.cellSize - inset * 2 - 2, 1);
@@ -333,9 +333,9 @@ class UIRenderer {
       // Mini block with gradient
       const grad = ctx.createLinearGradient(dx, dy, dx, dy + size);
       grad.addColorStop(0, color);
-      grad.addColorStop(1, this._darkenColor(color, 15));
+      grad.addColorStop(1, darkenColor(color, 15));
       ctx.fillStyle = grad;
-      this._roundRect(dx + inset, dy + inset, size - inset * 2, size - inset * 2, r);
+      roundRect(ctx, dx + inset, dy + inset, size - inset * 2, size - inset * 2, r);
       ctx.fill();
 
       // Top highlight
@@ -347,17 +347,17 @@ class UIRenderer {
   _drawPanel(x, y, w, h) {
     const ctx = this.ctx;
     const r = THEME.radius.panel(this.cellSize);
-    const rgb = this._hexToRgb(this.accentColor);
+    const rgb = hexToRgb(this.accentColor);
 
     // Dark background matching board
     ctx.fillStyle = THEME.color.bg.board;
-    this._roundRect(x, y, w, h, r);
+    roundRect(ctx, x, y, w, h, r);
     ctx.fill();
 
     // Player color tint (matches board)
     if (rgb) {
       ctx.fillStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${THEME.opacity.tint})`;
-      this._roundRect(x, y, w, h, r);
+      roundRect(ctx, x, y, w, h, r);
       ctx.fill();
     }
 
@@ -366,40 +366,8 @@ class UIRenderer {
       ? `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${THEME.opacity.soft})`
       : `rgba(255, 255, 255, ${THEME.opacity.tint})`;
     ctx.lineWidth = THEME.stroke.border;
-    this._roundRect(x, y, w, h, r);
+    roundRect(ctx, x, y, w, h, r);
     ctx.stroke();
-  }
-
-  _roundRect(x, y, w, h, r) {
-    const ctx = this.ctx;
-    r = Math.min(r, w / 2, h / 2);
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.lineTo(x + w - r, y);
-    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-    ctx.lineTo(x + w, y + h - r);
-    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-    ctx.lineTo(x + r, y + h);
-    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-    ctx.lineTo(x, y + r);
-    ctx.quadraticCurveTo(x, y, x + r, y);
-    ctx.closePath();
-  }
-
-  _hexToRgb(hex) {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result ? {
-      r: parseInt(result[1], 16),
-      g: parseInt(result[2], 16),
-      b: parseInt(result[3], 16)
-    } : null;
-  }
-
-  _darkenColor(hex, percent) {
-    const rgb = this._hexToRgb(hex);
-    if (!rgb) return hex;
-    const factor = 1 - percent / 100;
-    return `rgb(${Math.round(rgb.r * factor)}, ${Math.round(rgb.g * factor)}, ${Math.round(rgb.b * factor)})`;
   }
 
   _getGarbageIndicatorAlpha(effect, now) {

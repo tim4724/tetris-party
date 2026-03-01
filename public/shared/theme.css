@@ -29,6 +29,12 @@
   --medal-silver: #c0c0c0;
   --medal-bronze: #cd7f32;
 
+  /* Button text */
+  --btn-green-text: #003d1f;
+
+  /* Overlay */
+  --overlay-bg: rgba(6, 6, 15, 0.88);
+
   /* Glows */
   --glow-cyan: rgba(0, 200, 255, 0.15);
   --glow-green: rgba(0, 255, 136, 0.3);

@@ -71,7 +71,7 @@ html, body {
   border: none;
   border-radius: var(--radius-lg);
   background: linear-gradient(180deg, var(--accent-green) 0%, var(--accent-green-dark) 100%);
-  color: #003d1f;
+  color: var(--btn-green-text);
   font-family: 'Orbitron', sans-serif;
   font-size: clamp(1rem, 2.2vh, 1.8rem);
   font-weight: 700;
@@ -247,7 +247,7 @@ html, body {
 
 #start-btn:not(:disabled) {
   background: linear-gradient(180deg, var(--accent-green) 0%, var(--accent-green-dark) 100%);
-  color: #003d1f;
+  color: var(--btn-green-text);
   cursor: pointer;
   animation: fadeUp 0.5s 0.45s ease-out both, btnPulse 2.5s 1.2s ease-in-out infinite;
 }
@@ -373,7 +373,7 @@ html, body {
   top: 0;
   left: 0;
   z-index: 15;
-  background: rgba(6, 6, 15, 0.88);
+  background: var(--overlay-bg);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   animation: overlayFadeIn 0.3s ease both;
@@ -398,7 +398,7 @@ html, body {
   border: none;
   border-radius: var(--radius-md);
   background: linear-gradient(180deg, var(--accent-green) 0%, var(--accent-green-dark) 100%);
-  color: #003d1f;
+  color: var(--btn-green-text);
   font-family: 'Orbitron', sans-serif;
   font-size: clamp(0.85rem, 1.6vh, 1.2rem);
   font-weight: 700;
@@ -440,7 +440,7 @@ html, body {
   left: 0;
   z-index: 20;
   background: radial-gradient(ellipse at 50% 30%, var(--winner-glow, rgba(255, 215, 0, 0.06)) 0%, transparent 60%),
-              rgba(6, 6, 15, 0.88);
+              var(--overlay-bg);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   animation: overlayFadeIn 0.5s ease both;
@@ -508,7 +508,7 @@ html, body {
   border: none;
   border-radius: var(--radius-md);
   background: linear-gradient(180deg, var(--accent-green) 0%, var(--accent-green-dark) 100%);
-  color: #003d1f;
+  color: var(--btn-green-text);
   font-family: 'Orbitron', sans-serif;
   font-size: clamp(0.85rem, 1.6vh, 1.2rem);
   font-weight: 700;

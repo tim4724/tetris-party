@@ -22,7 +22,7 @@ class BoardRenderer {
     const ctx = this.ctx;
 
     // 1. Board background — player-color tinted (matches controller touch pad)
-    const rgb = this._hexToRgb(this.accentColor);
+    const rgb = hexToRgb(this.accentColor);
     // Base dark background
     ctx.fillStyle = THEME.color.bg.board;
     ctx.fillRect(this.x, this.y, this.boardWidth, this.boardHeight);
@@ -106,7 +106,7 @@ class BoardRenderer {
           ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
           ctx.fillRect(this.x, this.y + row * this.cellSize, this.boardWidth, this.cellSize);
           // Player accent tint
-          const rgb = this._hexToRgb(this.accentColor);
+          const rgb = hexToRgb(this.accentColor);
           if (rgb) {
             ctx.fillStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha * 0.3})`;
             ctx.fillRect(this.x, this.y + row * this.cellSize, this.boardWidth, this.cellSize);
@@ -121,7 +121,7 @@ class BoardRenderer {
 
   _drawBoardBorder() {
     const ctx = this.ctx;
-    const rgb = this._hexToRgb(this.accentColor);
+    const rgb = hexToRgb(this.accentColor);
     // Subtle player-color border (matches controller touch pad)
     ctx.strokeStyle = rgb
       ? `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${THEME.opacity.soft})`
@@ -141,7 +141,7 @@ class BoardRenderer {
     if (isGarbage) {
       // Garbage blocks — flat muted style
       ctx.fillStyle = THEME.color.garbage;
-      this._roundRect(x + inset, y + inset, size - inset * 2, size - inset * 2, r);
+      roundRect(ctx, x + inset, y + inset, size - inset * 2, size - inset * 2, r);
       ctx.fill();
       // Subtle noise texture
       ctx.fillStyle = `rgba(255, 255, 255, ${THEME.opacity.faint})`;
@@ -153,14 +153,14 @@ class BoardRenderer {
     let grad = this._blockGradients.get(color);
     if (!grad) {
       grad = ctx.createLinearGradient(0, 0, 0, size);
-      grad.addColorStop(0, this._lighten(color, 15));
-      grad.addColorStop(1, this._darken(color, 10));
+      grad.addColorStop(0, lightenColor(color, 15));
+      grad.addColorStop(1, darkenColor(color, 10));
       this._blockGradients.set(color, grad);
     }
     ctx.save();
     ctx.translate(x, y);
     ctx.fillStyle = grad;
-    this._roundRect(inset, inset, size - inset * 2, size - inset * 2, r);
+    roundRect(ctx, inset, inset, size - inset * 2, size - inset * 2, r);
     ctx.fill();
 
     // Top highlight
@@ -200,51 +200,6 @@ class BoardRenderer {
     // Very faint fill
     ctx.fillStyle = color.replace(/[\d.]+\)$/, '0.08)');
     ctx.fillRect(x + inset, y + inset, size - inset * 2, size - inset * 2);
-  }
-
-  _roundRect(x, y, w, h, r) {
-    const ctx = this.ctx;
-    r = Math.min(r, w / 2, h / 2);
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.lineTo(x + w - r, y);
-    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-    ctx.lineTo(x + w, y + h - r);
-    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-    ctx.lineTo(x + r, y + h);
-    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-    ctx.lineTo(x, y + r);
-    ctx.quadraticCurveTo(x, y, x + r, y);
-    ctx.closePath();
-  }
-
-  _hexToRgb(hex) {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result ? {
-      r: parseInt(result[1], 16),
-      g: parseInt(result[2], 16),
-      b: parseInt(result[3], 16)
-    } : null;
-  }
-
-  _lighten(hex, percent) {
-    const rgb = this._hexToRgb(hex);
-    if (!rgb) return hex;
-    const factor = 1 + percent / 100;
-    const r = Math.min(255, Math.round(rgb.r * factor));
-    const g = Math.min(255, Math.round(rgb.g * factor));
-    const b = Math.min(255, Math.round(rgb.b * factor));
-    return `rgb(${r}, ${g}, ${b})`;
-  }
-
-  _darken(hex, percent) {
-    const rgb = this._hexToRgb(hex);
-    if (!rgb) return hex;
-    const factor = 1 - percent / 100;
-    const r = Math.round(rgb.r * factor);
-    const g = Math.round(rgb.g * factor);
-    const b = Math.round(rgb.b * factor);
-    return `rgb(${r}, ${g}, ${b})`;
   }
 }
 

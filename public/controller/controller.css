@@ -100,7 +100,7 @@ html, body {
 
 #name-join-btn:not(:disabled) {
   background: linear-gradient(180deg, var(--accent-green) 0%, var(--accent-green-dark) 100%);
-  color: #003d1f;
+  color: var(--btn-green-text);
   cursor: pointer;
   animation: btnPulse 2.5s 0.5s ease-in-out infinite;
 }
@@ -192,7 +192,7 @@ html, body {
 
 #start-btn:not(:disabled) {
   background: linear-gradient(180deg, var(--accent-green) 0%, var(--accent-green-dark) 100%);
-  color: #003d1f;
+  color: var(--btn-green-text);
   cursor: pointer;
   animation: lobbyFadeUp 0.5s 0.4s ease-out both, btnPulse 2.5s 1s ease-in-out infinite;
 }
@@ -572,7 +572,7 @@ html, body {
   border: none;
   border-radius: 10px;
   background: linear-gradient(180deg, var(--accent-green) 0%, var(--accent-green-dark) 100%);
-  color: #003d1f;
+  color: var(--btn-green-text);
   font-family: 'Orbitron', sans-serif;
   font-size: 0.9rem;
   font-weight: 700;
@@ -738,7 +738,7 @@ html, body {
   border: none;
   border-radius: 10px;
   background: linear-gradient(180deg, var(--accent-green) 0%, var(--accent-green-dark) 100%);
-  color: #003d1f;
+  color: var(--btn-green-text);
   font-family: 'Orbitron', sans-serif;
   font-size: 0.9rem;
   font-weight: 700;
