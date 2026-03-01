@@ -47,7 +47,6 @@
   const statusDetail = document.getElementById('status-detail');
   const rejoinBtn = document.getElementById('rejoin-btn');
   const playerNameEl = document.getElementById('player-name');
-  const playerIndicator = document.getElementById('player-indicator');
   const playerIdentityName = document.getElementById('player-identity-name');
   const touchArea = document.getElementById('touch-area');
   const feedbackLayer = document.getElementById('feedback-layer');
@@ -393,8 +392,6 @@
     if (!playerName) playerName = PLAYER_NAMES[playerId - 1] || ('Player ' + playerId);
 
     playerNameEl.textContent = playerName;
-    playerIndicator.style.background = playerColor;
-    playerIndicator.style.color = playerColor;
 
     // Reconnected into an active game — jump straight to game screen
     if (data.reconnected && (data.roomState === 'playing' || data.roomState === 'countdown')) {
