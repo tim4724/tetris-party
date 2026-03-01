@@ -777,6 +777,31 @@ html, body {
   display: none;
 }
 
+/* Mute button */
+#mute-btn {
+  width: 48px;
+  height: 48px;
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+#mute-btn:active {
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(0.92);
+}
+
+#mute-btn.muted {
+  color: rgba(255, 255, 255, 0.25);
+}
+
 /* Pause overlay */
 #pause-overlay {
   position: absolute;

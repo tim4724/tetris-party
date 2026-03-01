@@ -51,6 +51,21 @@
   const pauseNewGameBtn = document.getElementById('pause-newgame-btn');
   const pauseStatus = document.getElementById('pause-status');
   const pauseButtons = document.getElementById('pause-buttons');
+  const muteBtn = document.getElementById('mute-btn');
+  let muted = localStorage.getItem('tetris_muted') === '1';
+
+  // Apply initial mute state
+  if (muted) {
+    muteBtn.classList.add('muted');
+    muteBtn.querySelector('.sound-waves').style.display = 'none';
+  }
+
+  muteBtn.addEventListener('click', function () {
+    muted = !muted;
+    localStorage.setItem('tetris_muted', muted ? '1' : '0');
+    muteBtn.classList.toggle('muted', muted);
+    muteBtn.querySelector('.sound-waves').style.display = muted ? 'none' : '';
+  });
 
   // Screen management
   function showScreen(name) {
@@ -112,6 +127,7 @@
 
   // Short tactile tick — supplements vibrate for haptic-like feedback
   function playTick() {
+    if (muted) return;
     var ctx = getAudioCtx();
     var osc = ctx.createOscillator();
     var gain = ctx.createGain();
@@ -127,6 +143,7 @@
 
   // Line clear chime — pitch and duration scale with lines cleared
   function playLineClear(count) {
+    if (muted) return;
     var ctx = getAudioCtx();
     var baseFreq = count >= 4 ? 600 : count >= 3 ? 500 : count >= 2 ? 440 : 380;
     var duration = count >= 4 ? 0.25 : 0.15;
@@ -145,6 +162,7 @@
 
   // Hard drop — punchy impact with noise burst
   function playDrop() {
+    if (muted) return;
     var ctx = getAudioCtx();
     var t = ctx.currentTime;
     // Low thud
@@ -175,6 +193,7 @@
 
   // Hold — quick two-tone swoosh (high→low)
   function playHold() {
+    if (muted) return;
     var ctx = getAudioCtx();
     var t = ctx.currentTime;
     var osc = ctx.createOscillator();

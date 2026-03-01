@@ -25,7 +25,6 @@ const lobbyScreen = document.getElementById('lobby-screen');
 const gameScreen = document.getElementById('game-screen');
 const resultsScreen = document.getElementById('results-screen');
 const qrCode = document.getElementById('qr-code');
-const roomCodeEl = document.getElementById('room-code');
 const joinUrlEl = document.getElementById('join-url');
 const playerListEl = document.getElementById('player-list');
 const startBtn = document.getElementById('start-btn');
@@ -39,6 +38,8 @@ const pauseBtn = document.getElementById('pause-btn');
 const pauseOverlay = document.getElementById('pause-overlay');
 const pauseContinueBtn = document.getElementById('pause-continue-btn');
 const pauseNewGameBtn = document.getElementById('pause-newgame-btn');
+const muteBtn = document.getElementById('mute-btn');
+let muted = false;
 
 // --- Screen Management ---
 function showScreen(name) {
@@ -238,11 +239,143 @@ function handleMessage(msg) {
   }
 }
 
+// --- Tetris QR Helpers (standalone, renders to separate canvas) ---
+function _hexToRgb(hex) {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : null;
+}
+
+function _lighten(hex, percent) {
+  const rgb = _hexToRgb(hex);
+  if (!rgb) return hex;
+  const f = 1 + percent / 100;
+  return `rgb(${Math.min(255, Math.round(rgb.r * f))}, ${Math.min(255, Math.round(rgb.g * f))}, ${Math.min(255, Math.round(rgb.b * f))})`;
+}
+
+function _darken(hex, percent) {
+  const rgb = _hexToRgb(hex);
+  if (!rgb) return hex;
+  const f = 1 - percent / 100;
+  return `rgb(${Math.round(rgb.r * f)}, ${Math.round(rgb.g * f)}, ${Math.round(rgb.b * f)})`;
+}
+
+function _roundRect(ctx, x, y, w, h, r) {
+  r = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function renderTetrisQR(canvas, qrMatrix) {
+  if (!qrMatrix || !qrMatrix.modules) return;
+  const { size, modules } = qrMatrix;
+
+  const dpr = window.devicePixelRatio || 1;
+  const cssSize = canvas.parentElement
+    ? Math.min(canvas.parentElement.clientWidth, canvas.parentElement.clientHeight, 280)
+    : 280;
+  const cellPx = Math.floor((cssSize * dpr) / size);
+  const totalPx = cellPx * size;
+
+  canvas.width = totalPx;
+  canvas.height = totalPx;
+  canvas.style.width = (totalPx / dpr) + 'px';
+  canvas.style.height = (totalPx / dpr) + 'px';
+
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, totalPx, totalPx);
+
+  // White background
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, totalPx, totalPx);
+
+  // Finder pattern detection (7x7 squares at three corners)
+  function isFinderPattern(r, c) {
+    if (r < 7 && c < 7) return true;           // top-left
+    if (r < 7 && c >= size - 7) return true;    // top-right
+    if (r >= size - 7 && c < 7) return true;    // bottom-left
+    return false;
+  }
+
+  // Curated palette — 5 high-contrast Tetris colors (no yellow for scannability)
+  const palette = [
+    PIECE_COLORS[1], // I - cyan
+    PIECE_COLORS[6], // T - purple
+    PIECE_COLORS[7], // Z - red
+    PIECE_COLORS[2], // J - blue
+    PIECE_COLORS[3], // L - orange
+  ];
+  const finderColor = '#1a1a2e'; // dark near-black for finder patterns — max contrast
+
+  const inset = Math.max(0.5, cellPx * 0.03); // near-zero gap — tight blocks
+  const radius = Math.max(1, cellPx * 0.15);
+
+  for (let row = 0; row < size; row++) {
+    for (let col = 0; col < size; col++) {
+      const idx = row * size + col;
+      const isDark = modules[idx] & 1;
+      if (!isDark) continue;
+
+      const x = col * cellPx;
+      const y = row * cellPx;
+      const s = cellPx;
+
+      // Pick color: finder patterns get a single dark color, data modules get smooth diagonal gradient
+      let color;
+      if (isFinderPattern(row, col)) {
+        color = finderColor;
+      } else {
+        const t = (row + col) / (size * 0.8);
+        color = palette[Math.floor(t * palette.length) % palette.length];
+      }
+
+      // Rounded rect with vertical gradient
+      const grad = ctx.createLinearGradient(x, y, x, y + s);
+      grad.addColorStop(0, _lighten(color, 15));
+      grad.addColorStop(1, _darken(color, 10));
+
+      ctx.fillStyle = grad;
+      _roundRect(ctx, x + inset, y + inset, s - inset * 2, s - inset * 2, radius);
+      ctx.fill();
+
+      // Top highlight
+      ctx.fillStyle = `rgba(255, 255, 255, ${isFinderPattern(row, col) ? 0.15 : 0.35})`;
+      ctx.fillRect(x + inset + radius, y + inset, s - inset * 2 - radius * 2, Math.max(1, s * 0.08));
+
+      // Left highlight
+      ctx.fillStyle = `rgba(255, 255, 255, ${isFinderPattern(row, col) ? 0.08 : 0.15})`;
+      ctx.fillRect(x + inset, y + inset + radius, Math.max(1, s * 0.07), s - inset * 2 - radius * 2);
+
+      // Bottom shadow
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+      ctx.fillRect(x + inset + radius, y + s - inset - Math.max(1, s * 0.08), s - inset * 2 - radius * 2, Math.max(1, s * 0.08));
+
+      // Inner shine (skip on dark finder blocks)
+      if (!isFinderPattern(row, col)) {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+        const shineSize = s * 0.25;
+        ctx.fillRect(x + s * 0.25, y + s * 0.2, shineSize, shineSize * 0.5);
+      }
+    }
+  }
+}
+
 function onRoomCreated(msg) {
-  qrCode.src = msg.qrDataUrl;
-  roomCodeEl.textContent = msg.roomCode;
   joinUrlEl.textContent = msg.joinUrl;
   showScreen('lobby');
+  requestAnimationFrame(() => renderTetrisQR(qrCode, msg.qrMatrix));
 }
 
 function onPlayerJoined(msg) {
@@ -288,7 +421,10 @@ function onCountdown(msg) {
   playCountdownBeep(msg.value === 'GO');
 
   if (msg.value === 'GO') {
-    if (music && !music.playing) music.start();
+    if (music && !music.playing) {
+      music.start();
+      if (muted) music.masterGain.gain.setValueAtTime(0, music.ctx.currentTime);
+    }
     setTimeout(() => {
       countdownOverlay.classList.add('hidden');
       countdownOverlay.textContent = '';
@@ -472,6 +608,7 @@ function initMusic() {
 
 // Countdown beep using Web Audio API
 function playCountdownBeep(isGo) {
+  if (muted) return;
   if (!music || !music.ctx) return;
   const actx = music.ctx;
   if (actx.state === 'suspended') actx.resume();
@@ -562,6 +699,17 @@ newGameResultsBtn.addEventListener('click', () => {
   send(MSG.RETURN_TO_LOBBY);
 });
 
+// --- Mute ---
+muteBtn.addEventListener('click', () => {
+  muted = !muted;
+  muteBtn.querySelector('.sound-waves').style.display = muted ? 'none' : '';
+  if (music && music.masterGain) {
+    music.masterGain.gain.cancelScheduledValues(music.ctx.currentTime);
+    music.masterGain.gain.setValueAtTime(music.masterGain.gain.value, music.ctx.currentTime);
+    music.masterGain.gain.linearRampToValueAtTime(muted ? 0 : 0.12, music.ctx.currentTime + 0.05);
+  }
+});
+
 // --- Fullscreen ---
 fullscreenBtn.addEventListener('click', () => {
   if (!document.fullscreenElement) {
@@ -583,7 +731,10 @@ function onGameResumed() {
   if (currentScreen === 'game') {
     gameToolbar.classList.remove('hidden');
   }
-  if (music) music.start();
+  if (music) {
+    music.start();
+    if (muted) music.masterGain.gain.setValueAtTime(0, music.ctx.currentTime);
+  }
 }
 
 pauseBtn.addEventListener('click', () => {
