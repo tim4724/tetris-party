@@ -221,17 +221,17 @@ html, body {
 }
 
 #rejoin-btn {
-  padding: 0.75rem 2rem;
+  padding: 14px 32px;
   border: 1.5px solid rgba(0, 200, 255, 0.5);
   border-radius: var(--radius-md);
   background: transparent;
   font-family: 'Orbitron', sans-serif;
-  font-size: 0.85rem;
+  font-size: clamp(0.95rem, 4.5vw, 1.15rem);
   font-weight: 700;
   letter-spacing: 0.08em;
   color: rgba(0, 200, 255, 0.9);
   cursor: pointer;
-  margin-top: 16px;
+  margin-top: 24px;
   transition: all var(--transition-fast);
   animation: lobbyFadeUp 0.5s 0.35s ease-out both;
 }
