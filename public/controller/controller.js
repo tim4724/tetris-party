@@ -17,6 +17,7 @@
   let isHost = false;
   let playerCount = 0;
   let gameCancelled = false;
+  let lastLines = 0;
 
   // Falling tetromino background
   const bgCanvas = document.getElementById('bg-canvas');
@@ -494,7 +495,7 @@
   function onGameStart() {
     playTick();
     inputSeq = 0;
-    onPlayerState._lastLines = 0;
+    lastLines = 0;
     gameScreen.classList.remove('dead');
     gameScreen.classList.remove('paused');
     gameScreen.classList.remove('countdown');
@@ -516,10 +517,10 @@
       pauseBtn.classList.toggle('hidden', !isHost);
       initTouchInput();
     }
-    if (data.lines !== undefined && data.lines > (onPlayerState._lastLines || 0)) {
-      playLineClear(data.lines - (onPlayerState._lastLines || 0));
+    if (data.lines !== undefined && data.lines > lastLines) {
+      playLineClear(data.lines - lastLines);
     }
-    if (data.lines !== undefined) onPlayerState._lastLines = data.lines;
+    if (data.lines !== undefined) lastLines = data.lines;
     if (data.alive === false && !gameScreen.classList.contains('dead')) {
       gameScreen.classList.add('dead');
       showKoOverlay();

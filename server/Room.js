@@ -100,6 +100,11 @@ class Room {
       player.connected = false;
       player.ws = null;
 
+      if (player.graceTimer) {
+        clearTimeout(player.graceTimer);
+        player.graceTimer = null;
+      }
+
       if (immediate) {
         // Intentional leave — remove immediately
         this._removeLobbyPlayer(playerId);
@@ -350,9 +355,15 @@ class Room {
     if (this.paused) return;
     if (this.state !== ROOM_STATE.PLAYING && this.state !== ROOM_STATE.COUNTDOWN) return;
     this.paused = true;
-    if (this.state === ROOM_STATE.COUNTDOWN && this.countdownTimer) {
-      clearInterval(this.countdownTimer);
-      this.countdownTimer = null;
+    if (this.state === ROOM_STATE.COUNTDOWN) {
+      if (this.countdownTimer) {
+        clearInterval(this.countdownTimer);
+        this.countdownTimer = null;
+      }
+      if (this._goTimeout) {
+        clearTimeout(this._goTimeout);
+        this._goTimeout = null;
+      }
     }
     if (this.game) this.game.pause();
     this.broadcast(MSG.GAME_PAUSED, {});
@@ -364,7 +375,16 @@ class Room {
     this.paused = false;
     if (this.state === ROOM_STATE.COUNTDOWN && this._countdownCallback) {
       this.broadcast(MSG.GAME_RESUMED, {});
-      this.startCountdown(this._countdownCallback, this._countdownRemaining);
+      if (this._countdownRemaining === 0) {
+        // GO already shown — go straight to game start
+        this.broadcast(MSG.COUNTDOWN, { value: 'GO' });
+        this._goTimeout = setTimeout(() => {
+          this._goTimeout = null;
+          this._countdownCallback();
+        }, 500);
+      } else {
+        this.startCountdown(this._countdownCallback, this._countdownRemaining);
+      }
       return;
     }
     if (this.game) this.game.resume();

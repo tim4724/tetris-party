@@ -122,7 +122,8 @@ class TouchInput {
   }
 
   _updateGestureAxis(dx, dy) {
-    if (this.gestureAxis) return;
+    // Once vertical, stay vertical (strongest lock)
+    if (this.gestureAxis === 'vertical') return;
 
     const absDx = Math.abs(dx);
     const absDy = Math.abs(dy);
@@ -202,7 +203,7 @@ class TouchInput {
     // Block horizontal during vertical gesture UNLESS soft drop has been entered
     // (axis lock still protects hard drop flicks since those end before soft drop starts)
     const dxFromAnchor = x - this.anchorX;
-    if (this.gestureAxis !== 'vertical' || this.hasSoftDropped) {
+    if (this.gestureAxis === 'horizontal' || this.hasSoftDropped) {
       const steps = Math.trunc(dxFromAnchor / this.RATCHET_THRESHOLD);
       if (steps !== 0) {
         const action = steps > 0 ? INPUT.RIGHT : INPUT.LEFT;
@@ -300,16 +301,16 @@ class TouchInput {
       return;
     }
 
-    // 2. Hard drop: fast downward flick
-    if (this.gestureAxis !== 'horizontal' && vy > this.FLICK_VELOCITY_THRESHOLD && absVy > absVx) {
+    // 2. Hard drop: fast downward flick (velocity guards are sufficient)
+    if (vy > this.FLICK_VELOCITY_THRESHOLD && absVy > absVx) {
       this.onInput(INPUT.HARD_DROP);
       this._haptic([5, 5, 5]);
       this._resetState();
       return;
     }
 
-    // 3. Hold: fast upward flick
-    if (this.gestureAxis !== 'horizontal' && vy < -this.FLICK_VELOCITY_THRESHOLD && absVy > absVx) {
+    // 3. Hold: fast upward flick (velocity guards are sufficient)
+    if (vy < -this.FLICK_VELOCITY_THRESHOLD && absVy > absVx) {
       this.onInput(INPUT.HOLD);
       this._haptic(15);
       this._resetState();
