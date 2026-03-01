@@ -86,9 +86,11 @@
     // Falling blocks on waiting screen only
     if (welcomeBg) {
       if (name === 'waiting') {
+        bgCanvas.classList.remove('hidden');
         welcomeBg.start();
       } else {
         welcomeBg.stop();
+        bgCanvas.classList.add('hidden');
       }
     }
   }
