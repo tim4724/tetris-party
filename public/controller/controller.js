@@ -342,6 +342,7 @@
         onGameStart();
         break;
       case MSG.COUNTDOWN:
+        removeKoOverlay();
         // Show game screen in muted state during countdown (no overlay)
         if (currentScreen !== 'game') {
           gameScreen.classList.remove('dead');
@@ -650,7 +651,7 @@
     const ko = document.createElement('div');
     ko.id = 'ko-overlay';
     ko.textContent = 'KO';
-    touchArea.appendChild(ko);
+    gameScreen.appendChild(ko);
   }
 
   function removeKoOverlay() {
