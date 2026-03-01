@@ -286,7 +286,7 @@
         onGameStart();
         break;
       case MSG.COUNTDOWN:
-        onCountdown(data);
+        // Countdown is shown on display only; controller ignores it
         break;
       case MSG.PLAYER_STATE:
         onPlayerState(data);
@@ -352,7 +352,7 @@
       gameScreen.classList.remove('paused');
       gameScreen.style.setProperty('--player-color', playerColor);
       removeKoOverlay();
-      removeCountdownOverlay();
+
       pauseOverlay.classList.add('hidden');
       pauseBtn.classList.toggle('hidden', !isHost);
       showScreen('game');
@@ -431,30 +431,6 @@
     initTouchInput();
   }
 
-  function onCountdown(data) {
-    showScreen('game');
-    removeCountdownOverlay();
-
-    if (data.value === 0 || data.value === 'GO') {
-      // Show brief "GO" then clear
-      const overlay = document.createElement('div');
-      overlay.className = 'countdown-overlay go';
-      overlay.textContent = 'GO!';
-      gameScreen.appendChild(overlay);
-      setTimeout(removeCountdownOverlay, 400);
-      return;
-    }
-
-    const overlay = document.createElement('div');
-    overlay.className = 'countdown-overlay';
-    overlay.textContent = data.value;
-    gameScreen.appendChild(overlay);
-  }
-
-  function removeCountdownOverlay() {
-    const overlays = gameScreen.querySelectorAll('.countdown-overlay');
-    overlays.forEach(function(el) { el.remove(); });
-  }
 
   function onPlayerState(data) {
     if (data.lines !== undefined && data.lines > (onPlayerState._lastLines || 0)) {

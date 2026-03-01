@@ -727,37 +727,6 @@ html, body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Countdown overlay */
-#game-screen .countdown-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: 'Orbitron', sans-serif;
-  font-size: 128px;
-  font-weight: 900;
-  color: rgba(255, 255, 255, 0.8);
-  text-shadow: 0 0 24px color-mix(in srgb, var(--player-color, #4ecdc4) 60%, transparent);
-  pointer-events: none;
-  z-index: 10;
-  animation: countdownPulse 0.5s ease-out;
-}
-
-#game-screen .countdown-overlay.go {
-  color: var(--player-color, #4ecdc4);
-  font-size: 96px;
-  text-shadow: 0 0 32px color-mix(in srgb, var(--player-color, #4ecdc4) 50%, transparent);
-  animation: countdownPulse 0.4s ease-out;
-}
-
-@keyframes countdownPulse {
-  0% { transform: scale(1.4); opacity: 0.3; }
-  100% { transform: scale(1); opacity: 1; }
-}
 
 /* Pause button */
 #pause-btn {
