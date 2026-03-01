@@ -196,9 +196,11 @@ class TouchInput {
 
     this._updateGestureAxis(dxFromStart, dyFromStart);
 
-    // --- Horizontal: ratchet left/right unless the gesture is vertically locked ---
+    // --- Horizontal: ratchet left/right ---
+    // Block horizontal during vertical gesture UNLESS actively soft dropping
+    // (axis lock still protects hard drop flicks since those end before soft drop starts)
     const dxFromAnchor = x - this.anchorX;
-    if (this.gestureAxis !== 'vertical') {
+    if (this.gestureAxis !== 'vertical' || this.isSoftDropping) {
       const steps = Math.trunc(dxFromAnchor / this.RATCHET_THRESHOLD);
       if (steps !== 0) {
         const action = steps > 0 ? INPUT.RIGHT : INPUT.LEFT;
@@ -235,7 +237,7 @@ class TouchInput {
 
     // --- Progress: report axis with most pending movement ---
     if (this.onProgress) {
-      const hProgress = this.gestureAxis === 'vertical'
+      const hProgress = (this.gestureAxis === 'vertical' && !this.isSoftDropping)
         ? 0
         : Math.abs(x - this.anchorX) / this.RATCHET_THRESHOLD;
 
