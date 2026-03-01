@@ -105,10 +105,10 @@ test.describe('Display', () => {
     // Click START NEW GAME to enter lobby
     await page.click('#new-game-btn');
     await page.waitForSelector('#lobby-screen:not(.hidden)');
-    // Wait for QR code to be generated
+    // Wait for QR code canvas to be rendered
     await page.waitForFunction(() => {
-      const img = document.getElementById('qr-code');
-      return img && img.src && img.src.startsWith('data:');
+      const canvas = document.getElementById('qr-code');
+      return canvas && canvas.width > 0;
     });
     await page.waitForTimeout(200);
     // Stop background animation for deterministic snapshot
@@ -130,12 +130,13 @@ test.describe('Display', () => {
     await page.click('#new-game-btn');
     await page.waitForSelector('#lobby-screen:not(.hidden)');
     await page.waitForFunction(() => {
-      const el = document.getElementById('room-code');
+      const el = document.getElementById('join-url');
       return el && el.textContent && el.textContent.length > 0;
     });
 
-    // Get room code and join with controllers
-    const roomCode = await page.textContent('#room-code');
+    // Get room code from join URL (last path segment)
+    const joinUrl = await page.textContent('#join-url');
+    const roomCode = joinUrl.trim().split('/').pop();
     const controller1 = await context.newPage();
     await controller1.goto(`/${roomCode}`);
     const controller2 = await context.newPage();
