@@ -293,7 +293,8 @@
           gameScreen.classList.add('countdown');
           gameScreen.style.setProperty('--player-color', playerColor);
           pauseOverlay.classList.add('hidden');
-          pauseBtn.classList.add('hidden');
+          pauseBtn.disabled = true;
+          pauseBtn.classList.toggle('hidden', !isHost);
           hideLobbyElements();
           showScreen('game');
         }
@@ -435,6 +436,7 @@
     gameScreen.style.setProperty('--player-color', playerColor);
     removeKoOverlay();
     pauseOverlay.classList.add('hidden');
+    pauseBtn.disabled = false;
     pauseBtn.classList.toggle('hidden', !isHost);
     hideLobbyElements();
     showScreen('game');
@@ -445,6 +447,7 @@
     // Fallback: if GAME_START was missed, init touch on first state update
     if (!touchInput) {
       gameScreen.classList.remove('countdown');
+      pauseBtn.disabled = false;
       pauseBtn.classList.toggle('hidden', !isHost);
       initTouchInput();
     }

@@ -768,6 +768,11 @@ html, body {
   background: rgba(255, 255, 255, 0.8);
 }
 
+#pause-btn:disabled {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
 #pause-btn.hidden {
   display: none;
 }
@@ -854,11 +859,14 @@ html, body {
   letter-spacing: 0.04em;
 }
 
-/* Countdown state — muted touch area */
+/* Countdown state — neutral touch area, no player color */
 #game-screen.countdown #touch-area {
   pointer-events: none;
-  opacity: 0.3;
-  filter: grayscale(0.5);
+}
+
+#game-screen.countdown #touch-pad {
+  border-color: rgba(255, 255, 255, 0.06);
+  background-color: rgba(255, 255, 255, 0.02);
 }
 
 /* Paused state — disable touch input */
