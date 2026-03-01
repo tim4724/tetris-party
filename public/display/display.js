@@ -935,6 +935,11 @@ window.addEventListener('resize', () => {
 });
 
 // --- Initialize ---
+// Fetch and display version
+fetch('/api/version').then(r => r.json()).then(data => {
+  document.getElementById('version-label').textContent = `v${data.version}`;
+}).catch(() => {});
+
 // Falling tetromino background (shared across welcome + lobby screens)
 const bgCanvas = document.getElementById('bg-canvas');
 if (bgCanvas) {

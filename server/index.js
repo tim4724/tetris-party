@@ -11,6 +11,7 @@ const { MSG } = require('../public/shared/protocol.js');
 const PORT = parseInt(process.env.PORT, 10) || 4000;
 const PUBLIC_URL = process.env.PUBLIC_URL || ''; // e.g. https://main.tetris-party.duckdns.org
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
+const APP_VERSION = require('../package.json').version;
 
 // --- MIME types ---
 const MIME_TYPES = {
@@ -34,6 +35,13 @@ const server = http.createServer((req, res) => {
   if (urlPath === '/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ status: 'ok' }));
+    return;
+  }
+
+  // Version endpoint
+  if (urlPath === '/api/version') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ version: APP_VERSION }));
     return;
   }
 

@@ -106,9 +106,24 @@ html, body {
   box-shadow: 0 0 36px rgba(0, 255, 136, 0.5);
 }
 
-#github-link {
+#welcome-footer {
   position: absolute;
   bottom: clamp(1.2rem, 3vh, 2.5rem);
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 1.5vw, 16px);
+  animation: fadeUp 0.6s 0.6s ease-out both;
+}
+
+#version-label {
+  color: rgba(224, 224, 255, 0.15);
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: clamp(11px, 1.2vw, 13px);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+}
+
+#github-link {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -119,7 +134,6 @@ html, body {
   letter-spacing: 0.06em;
   text-decoration: none;
   transition: color 0.3s ease, filter 0.3s ease;
-  animation: fadeUp 0.6s 0.6s ease-out both;
 }
 
 #github-link:hover {
