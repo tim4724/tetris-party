@@ -61,13 +61,10 @@ function showScreen(name) {
     calculateLayout();
   }
 
-  // Manage welcome background animation
+  // Manage falling tetromino background (shared across welcome + lobby)
   if (welcomeBg) {
-    if (name === 'welcome') {
-      welcomeBg.start();
-    } else {
-      welcomeBg.stop();
-    }
+    if (name === 'welcome' || name === 'lobby') welcomeBg.start();
+    else welcomeBg.stop();
   }
 }
 
@@ -410,9 +407,12 @@ function updatePlayerList() {
     card.className = 'player-card';
     card.dataset.playerId = id;
 
+    const color = info.playerColor || PLAYER_COLORS[info.playerIndex] || '#fff';
+    card.style.setProperty('--player-color', color);
+
     const dot = document.createElement('span');
     dot.className = 'color-dot';
-    dot.style.backgroundColor = info.playerColor || PLAYER_COLORS[info.playerIndex] || '#fff';
+    dot.style.backgroundColor = color;
 
     const name = document.createElement('span');
     name.textContent = info.playerName || PLAYER_NAMES[info.playerIndex] || 'Player';
@@ -768,16 +768,14 @@ function drawTimer(elapsedMs) {
 // --- Window Resize ---
 window.addEventListener('resize', () => {
   resizeCanvas();
-  if (welcomeBg) {
-    welcomeBg.resize(window.innerWidth, window.innerHeight);
-  }
+  if (welcomeBg) welcomeBg.resize(window.innerWidth, window.innerHeight);
 });
 
 // --- Initialize ---
-// Welcome background animation
-const welcomeCanvas = document.getElementById('welcome-canvas');
-if (welcomeCanvas) {
-  welcomeBg = new WelcomeBackground(welcomeCanvas);
+// Falling tetromino background (shared across welcome + lobby screens)
+const bgCanvas = document.getElementById('bg-canvas');
+if (bgCanvas) {
+  welcomeBg = new WelcomeBackground(bgCanvas);
   welcomeBg.resize(window.innerWidth, window.innerHeight);
   welcomeBg.start();
 }

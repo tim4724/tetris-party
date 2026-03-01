@@ -92,7 +92,7 @@ test.describe('Display', () => {
     // Stop animation and hide canvas for deterministic snapshot
     await page.evaluate(() => {
       if (typeof welcomeBg !== 'undefined' && welcomeBg) welcomeBg.stop();
-      const c = document.getElementById('welcome-canvas');
+      const c = document.getElementById('bg-canvas');
       if (c) c.style.display = 'none';
     });
     await expect(page).toHaveScreenshot('display-welcome.png');
@@ -111,6 +111,12 @@ test.describe('Display', () => {
       return img && img.src && img.src.startsWith('data:');
     });
     await page.waitForTimeout(200);
+    // Stop background animation for deterministic snapshot
+    await page.evaluate(() => {
+      if (typeof welcomeBg !== 'undefined' && welcomeBg) welcomeBg.stop();
+      const c = document.getElementById('bg-canvas');
+      if (c) c.style.display = 'none';
+    });
     // Mask dynamic content (QR code, room code, join URL change per run)
     await expect(page).toHaveScreenshot('display-lobby-empty.png', {
       mask: [page.locator('#qr-container')],
@@ -141,6 +147,12 @@ test.describe('Display', () => {
       return list && list.children.length >= 2;
     });
     await page.waitForTimeout(200);
+    // Stop background animation for deterministic snapshot
+    await page.evaluate(() => {
+      if (typeof welcomeBg !== 'undefined' && welcomeBg) welcomeBg.stop();
+      const c = document.getElementById('bg-canvas');
+      if (c) c.style.display = 'none';
+    });
     await expect(page).toHaveScreenshot('display-lobby-players.png', {
       mask: [page.locator('#qr-container')],
       maxDiffPixelRatio: 0.02,

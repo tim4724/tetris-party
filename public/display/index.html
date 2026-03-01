@@ -11,6 +11,9 @@
   <link rel="stylesheet" href="/display/display.css">
 </head>
 <body>
+  <!-- Shared falling tetromino background (visible on welcome + lobby) -->
+  <canvas id="bg-canvas"></canvas>
+
   <!-- Mobile screen hint -->
   <div id="mobile-hint">
     <p class="mobile-hint-icon">🖥️</p>
@@ -21,7 +24,6 @@
 
   <!-- Welcome screen: unlocks audio via user gesture -->
   <div id="welcome-screen" class="screen">
-    <canvas id="welcome-canvas"></canvas>
     <h1>TETRIS PARTY</h1>
     <p class="welcome-subtitle">SHARED DISPLAY</p>
     <button id="new-game-btn">START NEW GAME</button>

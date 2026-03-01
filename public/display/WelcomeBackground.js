@@ -40,10 +40,15 @@ class WelcomeBackground {
     this.canvas.style.width = w + 'px';
     this.canvas.style.height = h + 'px';
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    // Redistribute pool across new width
+    // Scale pool positions proportionally to new dimensions
+    const oldW = this._prevW || w;
+    const oldH = this._prevH || h;
     for (const p of this.pool) {
-      p.x = Math.random() * w;
+      p.x = (p.x / oldW) * w;
+      p.y = (p.y / oldH) * h;
     }
+    this._prevW = w;
+    this._prevH = h;
   }
 
   start() {
