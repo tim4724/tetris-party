@@ -70,6 +70,7 @@
   }
 
   muteBtn.addEventListener('click', function () {
+    vibrate(10);
     muted = !muted;
     localStorage.setItem('tetris_muted', muted ? '1' : '0');
     muteBtn.classList.toggle('muted', muted);
@@ -119,7 +120,7 @@
     connect();
   }
 
-  nameJoinBtn.addEventListener('click', submitName);
+  nameJoinBtn.addEventListener('click', function () { vibrate(10); submitName(); });
   nameInput.addEventListener('keydown', function (e) {
     if (e.key === 'Enter') submitName();
   });
@@ -490,8 +491,6 @@
   }
 
   function onGameStart() {
-    // Best-effort start signal for mobile controllers.
-    vibrate([15, 25, 20]);
     playTick();
     inputSeq = 0;
     onPlayerState._lastLines = 0;
@@ -629,16 +628,19 @@
 
   pauseBtn.addEventListener('click', function () {
     if (!isHost) return;
+    vibrate(10);
     send(MSG.PAUSE_GAME);
   });
 
   pauseContinueBtn.addEventListener('click', function () {
     if (!isHost) return;
+    vibrate(10);
     send(MSG.RESUME_GAME);
   });
 
   pauseNewGameBtn.addEventListener('click', function () {
     if (!isHost) return;
+    vibrate(10);
     send(MSG.RETURN_TO_LOBBY);
   });
 
@@ -791,6 +793,7 @@
 
   // Rejoin button
   rejoinBtn.addEventListener('click', function () {
+    vibrate(10);
     sessionStorage.removeItem('reconnectToken_' + roomCode);
     sessionStorage.removeItem('playerId_' + roomCode);
     gameCancelled = false;
@@ -804,6 +807,7 @@
 
   // Disconnect button — close WS and return to name form
   disconnectBtn.addEventListener('click', function () {
+    vibrate(10);
     stopHeartbeat();
     // Tell server to remove immediately, then close
     if (ws) {
@@ -844,18 +848,21 @@
   // Start button (host only)
   startBtn.addEventListener('click', function () {
     if (!isHost || startBtn.disabled) return;
+    vibrate(10);
     send(MSG.START_GAME);
   });
 
   // Play Again button (host only, on gameover screen)
   playAgainBtn.addEventListener('click', function () {
     if (!isHost) return;
+    vibrate(10);
     send(MSG.PLAY_AGAIN);
   });
 
   // New Game button (host only, returns to lobby)
   newGameBtn.addEventListener('click', function () {
     if (!isHost) return;
+    vibrate(10);
     send(MSG.RETURN_TO_LOBBY);
   });
 
