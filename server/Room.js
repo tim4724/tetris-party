@@ -537,6 +537,19 @@ class Room {
     return count;
   }
 
+  // Extra state a reconnecting controller needs to restore its UI
+  getReconnectState(playerId) {
+    const info = { paused: this.paused };
+    if (this.game) {
+      const board = this.game.boards.get(playerId);
+      if (board) info.alive = board.alive;
+    }
+    if (this.state === ROOM_STATE.COUNTDOWN && this._countdownRemaining > 0) {
+      info.countdown = this._countdownRemaining;
+    }
+    return info;
+  }
+
   resyncDisplay() {
     const qrMatrix = this.getQRMatrix(this.joinUrl);
     this.sendToDisplay(MSG.ROOM_CREATED, {

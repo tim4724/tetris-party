@@ -14,7 +14,7 @@ let canvas = null;
 let ctx = null;
 let lastFrameTime = null;
 let playerIndexCounter = 0;
-let disconnectedQRs = new Map(); // playerId -> Canvas
+let disconnectedQRs = new Map(); // playerId -> Image
 let garbageIndicatorEffects = new Map(); // playerId -> transient attacker-colored meter block overlays
 let lastRoomCode = null; // remember room code for reconnect
 let welcomeBg = null;
@@ -848,7 +848,7 @@ function renderLoop(timestamp) {
         ctx.stroke();
 
         // Draw QR image clipped to rounded rect
-        if (qrImg && qrImg.width > 0) {
+        if (qrImg) {
           ctx.save();
           ctx.beginPath();
           ctx.roundRect(outerX + pad, outerY + pad, qrSize, qrSize, Math.max(1, radius - pad));

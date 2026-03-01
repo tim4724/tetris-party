@@ -237,7 +237,8 @@ async function handleNewConnection(ws, msg) {
           isHost: result.isHost,
           reconnected: true,
           playerCount: room.players.size,
-          roomState: room.state
+          roomState: room.state,
+          ...room.getReconnectState(result.playerId)
         });
         console.log(`Player ${result.playerId} rejoined room ${msg.roomCode} via QR`);
         return;
@@ -277,7 +278,8 @@ async function handleNewConnection(ws, msg) {
         reconnected: true,
         isHost: playerId === room.hostId,
         playerCount: room.players.size,
-        roomState: room.state
+        roomState: room.state,
+        ...room.getReconnectState(playerId)
       });
       console.log(`Player ${playerId} reconnected to room ${msg.roomCode}`);
     } else {

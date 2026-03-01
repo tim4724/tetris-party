@@ -425,8 +425,20 @@
       gameScreen.style.setProperty('--player-color', playerColor);
       removeKoOverlay();
 
-      pauseOverlay.classList.add('hidden');
-      pauseBtn.classList.toggle('hidden', !isHost);
+      // Restore paused state
+      if (data.paused) {
+        onGamePaused();
+      } else {
+        pauseOverlay.classList.add('hidden');
+        pauseBtn.classList.toggle('hidden', !isHost);
+      }
+
+      // Restore KO state
+      if (data.alive === false) {
+        gameScreen.classList.add('dead');
+        showKoOverlay();
+      }
+
       showScreen('game');
       initTouchInput();
       return;
@@ -630,7 +642,7 @@
       pauseStatus.textContent = '';
     } else {
       pauseButtons.classList.add('hidden');
-      pauseStatus.textContent = 'Game paused by host';
+      pauseStatus.textContent = '';
     }
   }
 
