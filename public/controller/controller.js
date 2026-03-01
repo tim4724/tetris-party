@@ -286,13 +286,14 @@
         onGameStart();
         break;
       case MSG.COUNTDOWN:
-        // No overlay — just ensure we're on the game screen during countdown
+        // Show game screen in muted state during countdown (no overlay)
         if (currentScreen !== 'game') {
           gameScreen.classList.remove('dead');
           gameScreen.classList.remove('paused');
+          gameScreen.classList.add('countdown');
           gameScreen.style.setProperty('--player-color', playerColor);
           pauseOverlay.classList.add('hidden');
-          pauseBtn.classList.toggle('hidden', !isHost);
+          pauseBtn.classList.add('hidden');
           hideLobbyElements();
           showScreen('game');
         }
@@ -430,9 +431,9 @@
     onPlayerState._lastLines = 0;
     gameScreen.classList.remove('dead');
     gameScreen.classList.remove('paused');
+    gameScreen.classList.remove('countdown');
     gameScreen.style.setProperty('--player-color', playerColor);
     removeKoOverlay();
-    removeCountdownOverlay();
     pauseOverlay.classList.add('hidden');
     pauseBtn.classList.toggle('hidden', !isHost);
     hideLobbyElements();
@@ -440,8 +441,13 @@
     initTouchInput();
   }
 
-
   function onPlayerState(data) {
+    // Fallback: if GAME_START was missed, init touch on first state update
+    if (!touchInput) {
+      gameScreen.classList.remove('countdown');
+      pauseBtn.classList.toggle('hidden', !isHost);
+      initTouchInput();
+    }
     if (data.lines !== undefined && data.lines > (onPlayerState._lastLines || 0)) {
       playLineClear(data.lines - (onPlayerState._lastLines || 0));
     }

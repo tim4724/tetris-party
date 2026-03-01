@@ -854,6 +854,13 @@ html, body {
   letter-spacing: 0.04em;
 }
 
+/* Countdown state — muted touch area */
+#game-screen.countdown #touch-area {
+  pointer-events: none;
+  opacity: 0.3;
+  filter: grayscale(0.5);
+}
+
 /* Paused state — disable touch input */
 #game-screen.paused #touch-area {
   pointer-events: none;
