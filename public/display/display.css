@@ -327,7 +327,7 @@ html, body {
   position: absolute;
   top: clamp(10px, 1.5vh, 20px);
   right: clamp(10px, 1.5vw, 20px);
-  z-index: 5;
+  z-index: 50;
   display: flex;
   gap: clamp(6px, 0.8vh, 10px);
 }
