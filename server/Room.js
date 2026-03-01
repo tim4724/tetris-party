@@ -255,14 +255,6 @@ class Room {
     }
   }
 
-  async getQRUrl(joinUrl) {
-    try {
-      return await QRCode.toDataURL(joinUrl, { width: 256, margin: 3 });
-    } catch (err) {
-      console.error('QR generation failed:', err);
-      return null;
-    }
-  }
 
   startGame() {
     if (this.state !== ROOM_STATE.LOBBY) return;

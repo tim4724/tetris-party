@@ -378,3 +378,80 @@ describe('Room - getNextPlayerId()', () => {
     assert.equal(room.getNextPlayerId(), null);
   });
 });
+
+describe('Room - getQRMatrix()', () => {
+  let room, displayWs;
+
+  beforeEach(() => {
+    displayWs = mockWs();
+    room = new Room('TEST', displayWs);
+  });
+
+  test('returns matrix with size and modules', () => {
+    const matrix = room.getQRMatrix('http://example.com/TEST');
+    assert.ok(matrix);
+    assert.equal(typeof matrix.size, 'number');
+    assert.ok(matrix.size > 0);
+    assert.ok(Array.isArray(matrix.modules));
+    assert.equal(matrix.modules.length, matrix.size * matrix.size);
+  });
+
+  test('matrix has dark modules (bit 0 set)', () => {
+    const matrix = room.getQRMatrix('http://example.com/TEST');
+    const darkCount = matrix.modules.filter(m => m & 1).length;
+    assert.ok(darkCount > 0, `Expected dark modules but found ${darkCount}`);
+  });
+
+  test('quiet zone padding is all light', () => {
+    const matrix = room.getQRMatrix('http://example.com/TEST');
+    const { size, modules } = matrix;
+    const quiet = 2;
+    // Top rows
+    for (let row = 0; row < quiet; row++) {
+      for (let col = 0; col < size; col++) {
+        assert.equal(modules[row * size + col] & 1, 0, `dark module in quiet zone at (${row},${col})`);
+      }
+    }
+    // Bottom rows
+    for (let row = size - quiet; row < size; row++) {
+      for (let col = 0; col < size; col++) {
+        assert.equal(modules[row * size + col] & 1, 0, `dark module in quiet zone at (${row},${col})`);
+      }
+    }
+    // Left/right columns
+    for (let row = 0; row < size; row++) {
+      for (let col = 0; col < quiet; col++) {
+        assert.equal(modules[row * size + col] & 1, 0, `dark module in quiet zone at (${row},${col})`);
+      }
+      for (let col = size - quiet; col < size; col++) {
+        assert.equal(modules[row * size + col] & 1, 0, `dark module in quiet zone at (${row},${col})`);
+      }
+    }
+  });
+
+  test('dark modules survive JSON round-trip', () => {
+    const matrix = room.getQRMatrix('http://example.com/TEST');
+    const json = JSON.stringify(matrix);
+    const parsed = JSON.parse(json);
+    const originalDark = matrix.modules.filter(m => m & 1).length;
+    const parsedDark = parsed.modules.filter(m => m & 1).length;
+    assert.equal(parsedDark, originalDark, 'dark module count changed after JSON round-trip');
+    assert.ok(parsedDark > 0);
+  });
+
+  test('disconnect sends qrMatrix to display', () => {
+    room.joinUrl = 'http://example.com/TEST';
+    const ws1 = mockWs();
+    room.addPlayer(ws1, 'Alice');
+    room.state = ROOM_STATE.PLAYING;
+
+    room.removePlayer(1);
+
+    const disconnectMsg = displayWs.sent.find(m => m.type === MSG.PLAYER_DISCONNECTED);
+    assert.ok(disconnectMsg, 'PLAYER_DISCONNECTED message not sent');
+    assert.ok(disconnectMsg.qrMatrix, 'qrMatrix missing from disconnect message');
+    assert.ok(disconnectMsg.qrMatrix.size > 0);
+    const darkCount = disconnectMsg.qrMatrix.modules.filter(m => m & 1).length;
+    assert.ok(darkCount > 0, `No dark modules in disconnect QR matrix (count: ${darkCount})`);
+  });
+});
