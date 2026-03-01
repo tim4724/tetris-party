@@ -805,8 +805,9 @@
   // Disconnect button — close WS and return to name form
   disconnectBtn.addEventListener('click', function () {
     stopHeartbeat();
-    // Suppress reconnect on close
+    // Tell server to remove immediately, then close
     if (ws) {
+      try { ws.send(JSON.stringify({ type: MSG.LEAVE })); } catch (_) {}
       ws.onclose = null;
       ws.onerror = null;
       try { ws.close(); } catch (_) {}

@@ -347,6 +347,9 @@ function handleControllerMessage(room, playerId, msg) {
     case MSG.HEARTBEAT:
       // Keepalive — isAlive already set on message receipt
       break;
+    case MSG.LEAVE:
+      room.removePlayer(playerId, true);
+      break;
   }
 }
 

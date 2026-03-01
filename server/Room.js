@@ -92,43 +92,54 @@ class Room {
     return { playerId, name: playerName, color, reconnectToken, isHost };
   }
 
-  removePlayer(playerId) {
+  removePlayer(playerId, immediate) {
     const player = this.players.get(playerId);
     if (!player) return;
 
     if (this.state === ROOM_STATE.LOBBY) {
-      // Grace period: hold the slot briefly so a reconnecting controller
-      // (e.g. visibilitychange race) can rejoin before we remove them.
       player.connected = false;
       player.ws = null;
+
+      if (immediate) {
+        // Intentional leave — remove immediately
+        this._removeLobbyPlayer(playerId);
+        return;
+      }
+
+      // Grace period: hold the slot briefly so a reconnecting controller
+      // (e.g. visibilitychange race) can rejoin before we remove them.
       player.graceTimer = setTimeout(() => {
         const current = this.players.get(playerId);
         if (!current || current.connected) return; // reconnected during grace
-        this.players.delete(playerId);
-
-        if (playerId === this.hostId) {
-          this.hostId = null;
-          this.broadcastToControllers(MSG.ERROR, { code: 'HOST_DISCONNECTED', message: 'Host disconnected' });
-          for (const [, p] of this.players) {
-            if (p.ws) {
-              try { p.ws.close(); } catch (e) { /* ignore */ }
-            }
-          }
-          this.players.clear();
-          this.sendToDisplay(MSG.ROOM_RESET);
-        } else {
-          this.broadcastLobbyUpdate();
-          this.sendToDisplay(MSG.PLAYER_LEFT, {
-            playerId,
-            playerCount: this.players.size
-          });
-        }
+        this._removeLobbyPlayer(playerId);
       }, 5000);
     } else {
       // In game: mark disconnected, show QR on display for rejoin
       player.connected = false;
       player.ws = null;
       this._sendDisconnectQR(playerId);
+    }
+  }
+
+  _removeLobbyPlayer(playerId) {
+    this.players.delete(playerId);
+
+    if (playerId === this.hostId) {
+      this.hostId = null;
+      this.broadcastToControllers(MSG.ERROR, { code: 'HOST_DISCONNECTED', message: 'Host disconnected' });
+      for (const [, p] of this.players) {
+        if (p.ws) {
+          try { p.ws.close(); } catch (e) { /* ignore */ }
+        }
+      }
+      this.players.clear();
+      this.sendToDisplay(MSG.ROOM_RESET);
+    } else {
+      this.broadcastLobbyUpdate();
+      this.sendToDisplay(MSG.PLAYER_LEFT, {
+        playerId,
+        playerCount: this.players.size
+      });
     }
   }
 
