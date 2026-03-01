@@ -40,14 +40,16 @@ describe('Room - addPlayer()', () => {
     assert.equal(result.isHost, false);
   });
 
-  test('reuses smallest available ID after removal', () => {
+  test('reuses smallest available ID after removal', (t) => {
+    t.mock.timers.enable({ apis: ['setTimeout'] });
     const ws1 = mockWs();
     const ws2 = mockWs();
     room.addPlayer(ws1, 'Alice'); // id=1
     room.addPlayer(ws2, 'Bob');   // id=2
 
-    // Remove player 1 (host) — clears all players
+    // Remove player 1 (host) — clears all players after grace period
     room.removePlayer(1);
+    t.mock.timers.tick(5000);
 
     // Add two new players — should get id=1 and id=2
     const ws3 = mockWs();
@@ -58,7 +60,8 @@ describe('Room - addPlayer()', () => {
     assert.equal(r4.playerId, 2);
   });
 
-  test('reuses gap when non-host leaves', () => {
+  test('reuses gap when non-host leaves', (t) => {
+    t.mock.timers.enable({ apis: ['setTimeout'] });
     // Need to avoid host disconnect (which clears all players)
     // Add 3 players, remove player 2, add new → should get id=2
     const ws1 = mockWs();
@@ -69,6 +72,7 @@ describe('Room - addPlayer()', () => {
     room.addPlayer(ws3, 'Charlie'); // id=3
 
     room.removePlayer(2); // non-host removal
+    t.mock.timers.tick(5000);
 
     const ws4 = mockWs();
     const r4 = room.addPlayer(ws4, 'Diana');
@@ -113,7 +117,8 @@ describe('Room - removePlayer()', () => {
     room = new Room('TEST', displayWs);
   });
 
-  test('non-host removal in lobby broadcasts LOBBY_UPDATE and PLAYER_LEFT', () => {
+  test('non-host removal in lobby broadcasts LOBBY_UPDATE and PLAYER_LEFT', (t) => {
+    t.mock.timers.enable({ apis: ['setTimeout'] });
     const ws1 = mockWs();
     const ws2 = mockWs();
     room.addPlayer(ws1, 'Alice'); // host
@@ -124,6 +129,7 @@ describe('Room - removePlayer()', () => {
     ws1.sent.length = 0;
 
     room.removePlayer(2);
+    t.mock.timers.tick(5000);
 
     assert.equal(room.players.size, 1);
     // Display should get PLAYER_LEFT
@@ -137,7 +143,8 @@ describe('Room - removePlayer()', () => {
     assert.equal(lobbyUpdate.playerCount, 1);
   });
 
-  test('host removal in lobby kicks all and sends ROOM_RESET', () => {
+  test('host removal in lobby kicks all and sends ROOM_RESET', (t) => {
+    t.mock.timers.enable({ apis: ['setTimeout'] });
     const ws1 = mockWs();
     const ws2 = mockWs();
     room.addPlayer(ws1, 'Alice');
@@ -147,6 +154,7 @@ describe('Room - removePlayer()', () => {
     ws2.sent.length = 0;
 
     room.removePlayer(1);
+    t.mock.timers.tick(5000);
 
     assert.equal(room.players.size, 0);
     assert.equal(room.hostId, null);
@@ -368,11 +376,13 @@ describe('Room - getNextPlayerId()', () => {
     assert.equal(room.getNextPlayerId(), 2);
   });
 
-  test('fills gaps', () => {
+  test('fills gaps', (t) => {
+    t.mock.timers.enable({ apis: ['setTimeout'] });
     room.addPlayer(mockWs(), 'Alice');   // id=1
     room.addPlayer(mockWs(), 'Bob');     // id=2
     room.addPlayer(mockWs(), 'Charlie'); // id=3
     room.removePlayer(2);               // remove Bob
+    t.mock.timers.tick(5000);
     assert.equal(room.getNextPlayerId(), 2);
   });
 

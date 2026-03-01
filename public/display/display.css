@@ -133,11 +133,6 @@ html, body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes btnPulse {
-  0%, 100% { box-shadow: 0 0 20px var(--glow-green); }
-  50% { box-shadow: 0 0 36px rgba(0, 255, 136, 0.5); }
-}
-
 #lobby-screen h1 {
   font-family: 'Orbitron', sans-serif;
   font-size: clamp(2rem, 5vh, 5rem);
@@ -444,7 +439,8 @@ html, body {
   top: 0;
   left: 0;
   z-index: 20;
-  background: rgba(6, 6, 15, 0.88);
+  background: radial-gradient(ellipse at 50% 30%, var(--winner-glow, rgba(255, 215, 0, 0.06)) 0%, transparent 60%),
+              rgba(6, 6, 15, 0.88);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   animation: overlayFadeIn 0.5s ease both;
@@ -456,12 +452,10 @@ html, body {
 }
 
 #results-screen h1 {
-  font-family: 'Orbitron', sans-serif;
   font-size: clamp(1.6rem, 4vh, 3.5rem);
-  font-weight: 900;
   letter-spacing: 0.15em;
   margin-bottom: clamp(1rem, 3vh, 3rem);
-  color: var(--text-primary);
+  filter: drop-shadow(0 0 24px rgba(0, 200, 255, 0.35));
 }
 
 #results-list {
@@ -473,45 +467,21 @@ html, body {
 }
 
 .result-row {
-  display: flex;
-  align-items: center;
   gap: 1rem;
   padding: clamp(0.6rem, 1.2vh, 1.2rem) clamp(1rem, 2vw, 2rem);
   border-radius: var(--radius-md);
   background: rgba(18, 18, 42, 0.95);
   border: 1px solid var(--border);
-  animation: fadeIn 0.4s ease both;
-}
-
-.result-row.rank-1 {
-  border-color: rgba(255, 215, 0, 0.4);
-  background: linear-gradient(135deg, rgba(18, 18, 42, 0.95), rgba(255, 215, 0, 0.12));
-  box-shadow: 0 0 16px rgba(255, 215, 0, 0.08);
-}
-
-.result-row.rank-2 {
-  border-color: rgba(192, 192, 192, 0.3);
-}
-
-.result-row.rank-3 {
-  border-color: rgba(205, 127, 50, 0.3);
 }
 
 .result-rank {
-  font-family: 'Orbitron', sans-serif;
   font-size: clamp(1.2rem, 2.5vh, 2.2rem);
   font-weight: 700;
   width: 2.5rem;
-  text-align: center;
 }
-
-.rank-1 .result-rank { color: var(--medal-gold); }
-.rank-2 .result-rank { color: var(--medal-silver); }
-.rank-3 .result-rank { color: var(--medal-bronze); }
 
 .result-name {
   flex: 1;
-  font-family: 'Orbitron', sans-serif;
   font-size: clamp(0.85rem, 1.8vh, 1.3rem);
   font-weight: 500;
 }
@@ -545,6 +515,7 @@ html, body {
   letter-spacing: 0.06em;
   cursor: pointer;
   transition: all 0.25s ease;
+  animation: resultsBtnIn 0.5s 0.6s ease-out both, btnPulse 2.5s 1.5s infinite;
 }
 
 #play-again-btn:hover {
@@ -564,6 +535,7 @@ html, body {
   letter-spacing: 0.06em;
   cursor: pointer;
   transition: var(--transition-fast);
+  animation: resultsBtnIn 0.5s 0.7s ease-out both;
 }
 
 #new-game-results-btn:hover {

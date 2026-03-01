@@ -23,6 +23,8 @@ class Room {
     this.hostId = null;
     this.joinUrl = null;
     this.paused = false;
+    this._goTimeout = null;
+    this._displayGraceTimer = null;
 
     activeRoomCodes.add(roomCode);
   }
@@ -95,27 +97,33 @@ class Room {
     if (!player) return;
 
     if (this.state === ROOM_STATE.LOBBY) {
-      this.players.delete(playerId);
+      // Grace period: hold the slot briefly so a reconnecting controller
+      // (e.g. visibilitychange race) can rejoin before we remove them.
+      player.connected = false;
+      player.ws = null;
+      player.graceTimer = setTimeout(() => {
+        const current = this.players.get(playerId);
+        if (!current || current.connected) return; // reconnected during grace
+        this.players.delete(playerId);
 
-      if (playerId === this.hostId) {
-        // Host disconnected — reset the session
-        this.hostId = null;
-        this.broadcastToControllers(MSG.ERROR, { code: 'HOST_DISCONNECTED', message: 'Host disconnected' });
-        for (const [, p] of this.players) {
-          if (p.ws) {
-            try { p.ws.close(); } catch (e) { /* ignore */ }
+        if (playerId === this.hostId) {
+          this.hostId = null;
+          this.broadcastToControllers(MSG.ERROR, { code: 'HOST_DISCONNECTED', message: 'Host disconnected' });
+          for (const [, p] of this.players) {
+            if (p.ws) {
+              try { p.ws.close(); } catch (e) { /* ignore */ }
+            }
           }
+          this.players.clear();
+          this.sendToDisplay(MSG.ROOM_RESET);
+        } else {
+          this.broadcastLobbyUpdate();
+          this.sendToDisplay(MSG.PLAYER_LEFT, {
+            playerId,
+            playerCount: this.players.size
+          });
         }
-        this.players.clear();
-        this.sendToDisplay(MSG.ROOM_RESET);
-      } else {
-        // Non-host left — update lobby
-        this.broadcastLobbyUpdate();
-        this.sendToDisplay(MSG.PLAYER_LEFT, {
-          playerId,
-          playerCount: this.players.size
-        });
-      }
+      }, 5000);
     } else {
       // In game: mark disconnected, show QR on display for rejoin
       player.connected = false;
@@ -125,9 +133,17 @@ class Room {
   }
 
   _sendDisconnectQR(playerId) {
+    const player = this.players.get(playerId);
+    if (player) {
+      player._qrGeneration = (player._qrGeneration || 0) + 1;
+    }
+    const generation = player ? player._qrGeneration : 0;
+
     if (this.joinUrl) {
       const rejoinUrl = `${this.joinUrl}?player=${playerId}`;
       this.getQRUrl(rejoinUrl).then((qrDataUrl) => {
+        const p = this.players.get(playerId);
+        if (p && (p.connected || p._qrGeneration !== generation)) return;
         this.sendToDisplay(MSG.PLAYER_DISCONNECTED, { playerId, qrDataUrl });
       });
     } else {
@@ -155,6 +171,10 @@ class Room {
   reconnectByToken(ws, token) {
     for (const [id, player] of this.players) {
       if (player.reconnectToken === token) {
+        // Close old socket to prevent duplicate connections
+        if (player.connected && player.ws && player.ws.readyState === 1) {
+          try { player.ws.close(); } catch (e) { /* ignore */ }
+        }
         player.ws = ws;
         player.connected = true;
         if (player.graceTimer) {
@@ -307,7 +327,10 @@ class Room {
         this._countdownRemaining = 0;
         // Send final "GO" so clients know to clear overlay
         this.broadcast(MSG.COUNTDOWN, { value: 'GO' });
-        setTimeout(() => onComplete(), 500);
+        this._goTimeout = setTimeout(() => {
+          this._goTimeout = null;
+          onComplete();
+        }, 500);
       }
     }, 1000);
   }
@@ -466,9 +489,45 @@ class Room {
     return count;
   }
 
+  resyncDisplay() {
+    const qrMatrix = this.getQRMatrix(this.joinUrl);
+    this.sendToDisplay(MSG.ROOM_CREATED, {
+      roomCode: this.roomCode, qrMatrix, joinUrl: this.joinUrl
+    });
+
+    for (const [id, player] of this.players) {
+      this.sendToDisplay(MSG.PLAYER_JOINED, {
+        playerId: id,
+        playerName: player.name,
+        playerColor: player.color,
+        playerCount: this.players.size
+      });
+    }
+
+    if (this.state === ROOM_STATE.PLAYING || this.state === ROOM_STATE.COUNTDOWN) {
+      this.sendToDisplay(MSG.GAME_START, {});
+      if (this.paused) {
+        this.sendToDisplay(MSG.GAME_PAUSED, {});
+      }
+      for (const [id, p] of this.players) {
+        if (!p.connected) {
+          this._sendDisconnectQR(id);
+        }
+      }
+    }
+  }
+
   destroy() {
     // Notify controllers before tearing down
     this.broadcastToControllers(MSG.ROOM_RESET);
+    if (this._goTimeout) {
+      clearTimeout(this._goTimeout);
+      this._goTimeout = null;
+    }
+    if (this._displayGraceTimer) {
+      clearTimeout(this._displayGraceTimer);
+      this._displayGraceTimer = null;
+    }
     if (this.countdownTimer) {
       clearInterval(this.countdownTimer);
       this.countdownTimer = null;

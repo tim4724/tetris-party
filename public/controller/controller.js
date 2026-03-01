@@ -558,18 +558,22 @@
     if (!results || !results.length) return;
 
     var sorted = results.slice().sort(function(a, b) { return a.rank - b.rank; });
+    var solo = sorted.length === 1;
     for (var i = 0; i < sorted.length; i++) {
       var r = sorted[i];
       var pColor = PLAYER_COLORS[(r.playerId - 1) % PLAYER_COLORS.length];
 
       var row = document.createElement('div');
-      row.className = 'result-row rank-' + r.rank;
+      row.className = solo ? 'result-row' : 'result-row rank-' + r.rank;
       row.style.setProperty('--row-delay', (0.2 + i * 0.08) + 's');
       if (r.playerId === playerId) row.classList.add('is-me');
 
-      var rankEl = document.createElement('span');
-      rankEl.className = 'result-rank';
-      rankEl.textContent = r.rank <= 3 ? ['', '1st', '2nd', '3rd'][r.rank] : r.rank + 'th';
+      if (!solo) {
+        var rankEl = document.createElement('span');
+        rankEl.className = 'result-rank';
+        rankEl.textContent = r.rank <= 3 ? ['', '1st', '2nd', '3rd'][r.rank] : r.rank + 'th';
+        row.appendChild(rankEl);
+      }
 
       var info = document.createElement('div');
       info.className = 'result-info';
@@ -585,7 +589,6 @@
 
       info.appendChild(nameEl);
       info.appendChild(scoreEl);
-      row.appendChild(rankEl);
       row.appendChild(info);
       resultsList.appendChild(row);
     }
@@ -801,6 +804,7 @@
 
   // Disconnect button — close WS and return to name form
   disconnectBtn.addEventListener('click', function () {
+    stopHeartbeat();
     // Suppress reconnect on close
     if (ws) {
       ws.onclose = null;

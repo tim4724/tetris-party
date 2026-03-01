@@ -158,10 +158,17 @@ wss.on('connection', (ws) => {
 
     if (info.type === 'display') {
       console.log(`Display disconnected from room ${info.roomCode}`);
-      room.destroy();
-      rooms.delete(info.roomCode);
-      console.log(`Room ${info.roomCode} destroyed`);
+      room.displayWs = null;
+      room._displayGraceTimer = setTimeout(() => {
+        room._displayGraceTimer = null;
+        room.destroy();
+        rooms.delete(info.roomCode);
+        console.log(`Room ${info.roomCode} destroyed (display timeout)`);
+      }, 15000);
     } else if (info.type === 'controller') {
+      // Skip if this is a stale ws replaced by a reconnect
+      const player = room.players.get(info.playerId);
+      if (player && player.ws !== ws) return;
       console.log(`Player ${info.playerId} disconnected from room ${info.roomCode}`);
       room.removePlayer(info.playerId);
     }
@@ -175,6 +182,20 @@ wss.on('connection', (ws) => {
 // --- Handle new connections ---
 async function handleNewConnection(ws, msg) {
   if (msg.type === MSG.CREATE_ROOM) {
+    // Display reconnecting to an existing room during grace period
+    if (msg.roomCode && rooms.has(msg.roomCode)) {
+      const room = rooms.get(msg.roomCode);
+      if (room._displayGraceTimer) {
+        clearTimeout(room._displayGraceTimer);
+        room._displayGraceTimer = null;
+        room.displayWs = ws;
+        clientInfo.set(ws, { roomCode: msg.roomCode, type: 'display' });
+        room.resyncDisplay();
+        console.log(`Display reconnected to room ${msg.roomCode}`);
+        return;
+      }
+    }
+
     const roomCode = (msg.roomCode && !rooms.has(msg.roomCode))
       ? msg.roomCode
       : Room.generateRoomCode();

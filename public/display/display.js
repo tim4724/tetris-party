@@ -647,31 +647,48 @@ function renderResults(results) {
   if (!results) return;
 
   const sorted = [...results].sort((a, b) => a.rank - b.rank);
-  for (const r of sorted) {
-    const row = document.createElement('div');
-    row.className = `result-row rank-${r.rank}`;
 
-    const rank = document.createElement('span');
-    rank.className = 'result-rank';
-    rank.textContent = r.rank <= 3 ? ['', '1st', '2nd', '3rd'][r.rank] : `${r.rank}th`;
+  // Set winner glow color from 1st-place player
+  const winner = sorted[0];
+  if (winner) {
+    const wInfo = players.get(winner.playerId);
+    const winnerColor = wInfo?.playerColor || PLAYER_COLORS[wInfo?.playerIndex] || '#ffd700';
+    const r = parseInt(winnerColor.slice(1, 3), 16) || 255;
+    const g = parseInt(winnerColor.slice(3, 5), 16) || 215;
+    const b = parseInt(winnerColor.slice(5, 7), 16) || 0;
+    resultsScreen.style.setProperty('--winner-glow', `rgba(${r}, ${g}, ${b}, 0.08)`);
+  }
+
+  const solo = sorted.length === 1;
+
+  sorted.forEach((res, i) => {
+    const row = document.createElement('div');
+    row.className = solo ? 'result-row' : `result-row rank-${res.rank}`;
+    row.style.setProperty('--row-delay', `${0.2 + i * 0.08}s`);
+
+    if (!solo) {
+      const rank = document.createElement('span');
+      rank.className = 'result-rank';
+      rank.textContent = res.rank <= 3 ? ['', '1st', '2nd', '3rd'][res.rank] : `${res.rank}th`;
+      row.appendChild(rank);
+    }
 
     const nameEl = document.createElement('span');
     nameEl.className = 'result-name';
-    const pInfo = players.get(r.playerId);
-    nameEl.textContent = r.playerName || pInfo?.playerName || `Player ${r.playerId}`;
+    const pInfo = players.get(res.playerId);
+    nameEl.textContent = res.playerName || pInfo?.playerName || `Player ${res.playerId}`;
     if (pInfo) {
       nameEl.style.color = pInfo.playerColor || PLAYER_COLORS[pInfo.playerIndex];
     }
 
     const stats = document.createElement('div');
     stats.className = 'result-stats';
-    stats.innerHTML = `<span>Score: ${r.score || 0}</span><span>Lines: ${r.lines || 0}</span><span>Lv ${r.level || 1}</span>`;
+    stats.innerHTML = `<span>Score: ${res.score || 0}</span><span>Lines: ${res.lines || 0}</span><span>Lv ${res.level || 1}</span>`;
 
-    row.appendChild(rank);
     row.appendChild(nameEl);
     row.appendChild(stats);
     resultsList.appendChild(row);
-  }
+  });
 }
 
 // Play Again — restart with same players
