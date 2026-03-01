@@ -36,6 +36,7 @@ class TouchInput {
     this.lastTime = 0;
     this.isDragging = false;
     this.isSoftDropping = false;
+    this.hasSoftDropped = false;
     this.gestureAxis = null;
 
     // Ring buffer for velocity calculation (last 4 positions)
@@ -84,6 +85,7 @@ class TouchInput {
     this.lastTime = 0;
     this.isDragging = false;
     this.isSoftDropping = false;
+    this.hasSoftDropped = false;
     this.gestureAxis = null;
     this.posBuffer = [];
     if (this.onProgress) this.onProgress(null, 0);
@@ -197,10 +199,10 @@ class TouchInput {
     this._updateGestureAxis(dxFromStart, dyFromStart);
 
     // --- Horizontal: ratchet left/right ---
-    // Block horizontal during vertical gesture UNLESS actively soft dropping
+    // Block horizontal during vertical gesture UNLESS soft drop has been entered
     // (axis lock still protects hard drop flicks since those end before soft drop starts)
     const dxFromAnchor = x - this.anchorX;
-    if (this.gestureAxis !== 'vertical' || this.isSoftDropping) {
+    if (this.gestureAxis !== 'vertical' || this.hasSoftDropped) {
       const steps = Math.trunc(dxFromAnchor / this.RATCHET_THRESHOLD);
       if (steps !== 0) {
         const action = steps > 0 ? INPUT.RIGHT : INPUT.LEFT;
@@ -221,6 +223,7 @@ class TouchInput {
         const speed = this._calcSoftDropSpeed(dyFromAnchor);
         if (!this.isSoftDropping) {
           this.isSoftDropping = true;
+          this.hasSoftDropped = true;
           this._haptic(15);
           this.onInput('soft_drop_start', { speed });
         } else {
@@ -237,7 +240,7 @@ class TouchInput {
 
     // --- Progress: report axis with most pending movement ---
     if (this.onProgress) {
-      const hProgress = (this.gestureAxis === 'vertical' && !this.isSoftDropping)
+      const hProgress = (this.gestureAxis === 'vertical' && !this.hasSoftDropped)
         ? 0
         : Math.abs(x - this.anchorX) / this.RATCHET_THRESHOLD;
 
