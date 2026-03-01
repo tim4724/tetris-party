@@ -240,7 +240,7 @@ class Room {
       const qr = QRCode.create(text, { errorCorrectionLevel: 'M' });
       const size = qr.modules.size;
       const modules = Array.from(qr.modules.data);
-      const quiet = 2;
+      const quiet = 1;
       const padded = size + quiet * 2;
       const paddedModules = new Array(padded * padded).fill(0);
       for (let row = 0; row < size; row++) {

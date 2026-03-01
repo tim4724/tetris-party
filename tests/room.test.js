@@ -405,7 +405,7 @@ describe('Room - getQRMatrix()', () => {
   test('quiet zone padding is all light', () => {
     const matrix = room.getQRMatrix('http://example.com/TEST');
     const { size, modules } = matrix;
-    const quiet = 2;
+    const quiet = 1;
     // Top rows
     for (let row = 0; row < quiet; row++) {
       for (let col = 0; col < size; col++) {
