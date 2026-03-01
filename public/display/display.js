@@ -16,6 +16,7 @@ let lastFrameTime = null;
 let playerIndexCounter = 0;
 let disconnectedQRs = new Map(); // playerId -> Image
 let garbageIndicatorEffects = new Map(); // playerId -> transient attacker-colored meter block overlays
+let lastRoomCode = null; // remember room code for reconnect
 let welcomeBg = null;
 
 // --- DOM References ---
@@ -163,7 +164,7 @@ function connect() {
   ws = new WebSocket(`${protocol}//${location.host}`);
 
   ws.onopen = function() {
-    ws.send(JSON.stringify({ type: MSG.CREATE_ROOM }));
+    ws.send(JSON.stringify({ type: MSG.CREATE_ROOM, roomCode: lastRoomCode }));
   };
 
   ws.onmessage = function(event) {
@@ -301,7 +302,7 @@ function renderTetrisQR(canvas, qrMatrix) {
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, totalPx, totalPx);
 
-  const color = PIECE_COLORS[2]; // J - dark blue
+  const color = THEME.color.bg.card; // #12122a — dark navy from UI theme
   const inset = Math.max(0.5, cellPx * 0.03);
   const radius = Math.max(1, cellPx * 0.15);
 
@@ -345,8 +346,20 @@ function renderTetrisQR(canvas, qrMatrix) {
 }
 
 function onRoomCreated(msg) {
+  // Reset local state — new room has no players
+  players.clear();
+  playerOrder = [];
+  playerIndexCounter = 0;
+  gameState = null;
+  boardRenderers = [];
+  uiRenderers = [];
+  disconnectedQRs.clear();
+  garbageIndicatorEffects.clear();
+
+  lastRoomCode = msg.roomCode;
   joinUrlEl.textContent = msg.joinUrl;
   showScreen('lobby');
+  updateStartButton();
   requestAnimationFrame(() => renderTetrisQR(qrCode, msg.qrMatrix));
 }
 

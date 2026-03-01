@@ -153,7 +153,9 @@ wss.on('connection', (ws) => {
 // --- Handle new connections ---
 async function handleNewConnection(ws, msg) {
   if (msg.type === MSG.CREATE_ROOM) {
-    const roomCode = Room.generateRoomCode();
+    const roomCode = (msg.roomCode && !rooms.has(msg.roomCode))
+      ? msg.roomCode
+      : Room.generateRoomCode();
     const room = new Room(roomCode, ws);
     rooms.set(roomCode, room);
 
