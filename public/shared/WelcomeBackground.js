@@ -16,11 +16,11 @@ class WelcomeBackground {
   };
 
   static PIECE_KEYS = Object.keys(WelcomeBackground.SHAPES);
-  static POOL_SIZE = 15;
 
-  constructor(canvas) {
+  constructor(canvas, poolSize = 15) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
+    this.poolSize = poolSize;
     this.pool = [];
     this.w = 0;
     this.h = 0;
@@ -68,7 +68,7 @@ class WelcomeBackground {
   // --- Internals ---
 
   _initPool() {
-    for (let i = 0; i < WelcomeBackground.POOL_SIZE; i++) {
+    for (let i = 0; i < this.poolSize; i++) {
       this.pool.push(this._makeShape(true));
     }
   }
@@ -81,7 +81,7 @@ class WelcomeBackground {
     const blockSize = 16 + Math.random() * 32; // 16-48px
     // Larger shapes fall slower for parallax depth feel
     const speed = 15 + (48 - blockSize) / 32 * 25; // 15-40 px/s
-    const drift = (Math.random() - 0.5) * 10; // ±5 px/s
+    const drift = 0;
     const opacity = 0.05 + Math.random() * 0.04; // 0.05-0.09
 
     // Pick a color from PIECE_COLORS (indices 1-7)

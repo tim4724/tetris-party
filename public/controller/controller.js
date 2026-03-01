@@ -18,6 +18,18 @@
   let playerCount = 0;
   let gameCancelled = false;
 
+  // Falling tetromino background
+  const bgCanvas = document.getElementById('bg-canvas');
+  let welcomeBg = null;
+  if (bgCanvas) {
+    welcomeBg = new WelcomeBackground(bgCanvas, 8);
+    welcomeBg.resize(window.innerWidth, window.innerHeight);
+    welcomeBg.start();
+    window.addEventListener('resize', function () {
+      welcomeBg.resize(window.innerWidth, window.innerHeight);
+    });
+  }
+
   // DOM refs
   const nameScreen = document.getElementById('name-screen');
   const nameInput = document.getElementById('name-input');
@@ -74,6 +86,15 @@
     waitingScreen.classList.toggle('hidden', name !== 'waiting');
     gameScreen.classList.toggle('hidden', name !== 'game');
     gameoverScreen.classList.toggle('hidden', name !== 'gameover');
+
+    // Falling blocks on name/waiting screens only
+    if (welcomeBg) {
+      if (name === 'name' || name === 'waiting') {
+        welcomeBg.start();
+      } else {
+        welcomeBg.stop();
+      }
+    }
   }
 
   // Extract room code and optional rejoin ID from URL
@@ -424,7 +445,7 @@
     playerCountEl.classList.add('hidden');
     rejoinBtn.classList.add('hidden');
 
-    playerIdentity.style.setProperty('--id-color', playerColor);
+    playerIdentity.style.setProperty('--player-color', playerColor);
     playerIdentityName.textContent = playerName || ('Player ' + playerId);
     playerIdentity.classList.remove('hidden');
 

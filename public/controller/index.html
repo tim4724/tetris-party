@@ -13,11 +13,12 @@
   <meta name="mobile-web-app-capable" content="yes">
 </head>
 <body>
+  <canvas id="bg-canvas"></canvas>
+
   <!-- Name entry screen -->
   <div id="name-screen" class="screen hidden">
     <h1 id="name-title">TETRIS PARTY</h1>
     <div id="name-form">
-      <label id="name-label" for="name-input">YOUR NAME</label>
       <input id="name-input" type="text" maxlength="16" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false" placeholder="Enter name...">
       <button id="name-join-btn">JOIN</button>
     </div>
@@ -33,7 +34,6 @@
     <p id="player-count" class="hidden"></p>
     <div id="player-identity" class="hidden">
       <div id="player-identity-card">
-        <span id="player-identity-dot"></span>
         <span id="player-identity-name"></span>
       </div>
     </div>
@@ -90,6 +90,7 @@
   <script src="/shared/protocol.js"></script>
   <script src="/shared/theme.js"></script>
   <script src="/shared/colors.js"></script>
+  <script src="/shared/WelcomeBackground.js"></script>
   <script src="/controller/TouchInput.js"></script>
   <script src="/controller/controller.js"></script>
 </body>

@@ -12,10 +12,19 @@ html, body {
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
   position: fixed;
   background: var(--bg-primary);
   color: white;
   font-family: system-ui, -apple-system, sans-serif;
+}
+
+#bg-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 
 .screen {
@@ -68,20 +77,11 @@ html, body {
   animation: lobbyFadeUp 0.5s 0.15s ease-out both;
 }
 
-#name-label {
-  font-family: system-ui, -apple-system, sans-serif;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.25em;
-  color: rgba(0, 200, 255, 0.4);
-  text-transform: uppercase;
-}
-
 #name-input {
   width: 100%;
   padding: 14px 20px;
-  border-radius: 10px;
-  border: 1.5px solid rgba(0, 200, 255, 0.2);
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--border);
   background: rgba(18, 18, 42, 0.9);
   color: #fff;
   font-family: 'Orbitron', sans-serif;
@@ -90,7 +90,7 @@ html, body {
   letter-spacing: 0.06em;
   text-align: center;
   outline: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
   -webkit-appearance: none;
 }
 
@@ -101,7 +101,7 @@ html, body {
 }
 
 #name-input:focus {
-  border-color: rgba(0, 200, 255, 0.5);
+  border-color: var(--accent-cyan);
   box-shadow: 0 0 12px rgba(0, 200, 255, 0.1);
 }
 
@@ -109,15 +109,15 @@ html, body {
   width: 100%;
   padding: 14px 28px;
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   font-family: 'Orbitron', sans-serif;
   font-size: 0.95rem;
   font-weight: 700;
   letter-spacing: 0.1em;
-  background: #1a1a2a;
-  color: #445;
+  background: var(--bg-card);
+  color: var(--text-secondary);
   cursor: default;
-  transition: all 0.25s ease;
+  transition: all var(--transition-normal);
   margin-top: 8px;
 }
 
@@ -136,9 +136,9 @@ html, body {
 
 /* Waiting screen */
 #waiting-screen {
-  gap: 0;
-  justify-content: flex-start;
-  padding-top: max(env(safe-area-inset-top), 10vh);
+  gap: 24px;
+  justify-content: center;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   background:
     radial-gradient(ellipse at 50% 30%, rgba(0, 100, 255, 0.06) 0%, transparent 60%),
     radial-gradient(ellipse at 50% 80%, rgba(0, 255, 136, 0.04) 0%, transparent 50%);
@@ -161,8 +161,8 @@ html, body {
 }
 
 @keyframes btnPulse {
-  0%, 100% { box-shadow: 0 0 12px rgba(0, 255, 136, 0.2); }
-  50% { box-shadow: 0 0 22px rgba(0, 255, 136, 0.38); }
+  0%, 100% { box-shadow: 0 0 20px var(--glow-green); }
+  50% { box-shadow: 0 0 36px rgba(0, 255, 136, 0.5); }
 }
 
 #lobby-title {
@@ -183,7 +183,6 @@ html, body {
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  margin-top: auto;
   animation: lobbyFadeUp 0.5s 0.15s ease-out both;
 }
 
@@ -192,7 +191,7 @@ html, body {
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.25em;
-  color: rgba(0, 200, 255, 0.4);
+  color: var(--text-secondary);
   text-transform: uppercase;
 }
 
@@ -206,8 +205,7 @@ html, body {
 
 #player-count {
   font-size: 14px;
-  color: rgba(106, 106, 136, 0.8);
-  margin-top: 12px;
+  color: var(--text-secondary);
   letter-spacing: 0.04em;
   animation: lobbyFadeIn 0.4s 0.3s ease-out both;
 }
@@ -217,50 +215,38 @@ html, body {
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  margin-top: 20px;
   animation: lobbyFadeUp 0.5s 0.3s ease-out both;
 }
 
 #player-identity-card {
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: center;
   padding: 14px 28px;
-  border-radius: 10px;
-  background: rgba(18, 18, 42, var(--opacity-panel, 0.9));
-  border: 1px solid color-mix(in srgb, var(--id-color, #888) 20%, transparent);
-}
-
-#player-identity-dot {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--id-color, #888);
-  box-shadow: 0 0 6px var(--id-color, #888);
-  flex-shrink: 0;
-}
-
-#player-identity-name {
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  border: 2px solid var(--player-color, var(--border));
+  box-shadow: 0 0 16px -4px var(--player-color, transparent);
   font-family: 'Orbitron', sans-serif;
   font-size: clamp(1.1rem, 5vw, 1.5rem);
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  color: var(--id-color, #fff);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--player-color, var(--text-primary));
 }
 
 #start-btn {
-  margin-top: auto;
+  margin-top: 32px;
   padding: 1rem 3rem;
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   font-family: 'Orbitron', sans-serif;
   font-size: 0.95rem;
   font-weight: 700;
   letter-spacing: 0.1em;
-  background: #1a1a2a;
-  color: #445;
+  background: var(--bg-card);
+  color: var(--text-secondary);
   cursor: default;
-  transition: all 0.25s ease;
+  transition: all var(--transition-normal);
   animation: lobbyFadeUp 0.5s 0.4s ease-out both;
 }
 
@@ -280,8 +266,7 @@ html, body {
 #status-text {
   font-size: 15px;
   font-weight: 600;
-  color: #889;
-  margin-top: auto;
+  color: var(--text-secondary);
   animation: lobbyFadeIn 0.4s 0.3s ease-out both;
 }
 
@@ -294,7 +279,7 @@ html, body {
 #rejoin-btn {
   padding: 0.75rem 2rem;
   border: 1.5px solid rgba(0, 200, 255, 0.5);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: transparent;
   font-family: 'Orbitron', sans-serif;
   font-size: 0.85rem;
@@ -303,8 +288,7 @@ html, body {
   color: rgba(0, 200, 255, 0.9);
   cursor: pointer;
   margin-top: 16px;
-  margin-bottom: auto;
-  transition: all 0.2s ease;
+  transition: all var(--transition-fast);
 }
 
 #rejoin-btn:active {
