@@ -909,8 +909,9 @@ function drawTimer(elapsedMs) {
   }
   const font = _timerFontReady ? 'Orbitron' : '"Courier New", monospace';
 
-  const cellSize = boardRenderers.length > 0 ? boardRenderers[0].cellSize : 24;
-  const labelSize = Math.max(12, cellSize * THEME.font.cellScale.timer);
+  // Size to match toolbar button height: clamp(36px, 4vh, 52px)
+  const btnH = Math.min(52, Math.max(36, window.innerHeight * 0.04));
+  const labelSize = Math.round(btnH * 0.6);
   const digitAdvance = labelSize * 0.92;
   const colonAdvance = labelSize * 0.52;
   const advances = [];
@@ -921,7 +922,9 @@ function drawTimer(elapsedMs) {
     timerWidth += advance;
   }
   const startX = window.innerWidth / 2 - timerWidth / 2;
-  const y = 14;
+  // Vertically center with toolbar buttons: top offset + half button height
+  const btnTop = Math.min(20, Math.max(10, window.innerHeight * 0.015));
+  const y = btnTop + (btnH - labelSize) / 2;
 
   ctx.fillStyle = `rgba(255, 255, 255, ${THEME.opacity.label})`;
   ctx.font = `700 ${labelSize}px ${font}`;
