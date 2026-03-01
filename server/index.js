@@ -99,26 +99,30 @@ const clientInfo = new WeakMap(); // ws -> { roomCode, playerId, type }
 // --- WebSocket Server ---
 const wss = new WebSocketServer({ server });
 
-// --- Heartbeat: detect stale connections within ~10s ---
-const HEARTBEAT_INTERVAL_MS = 10000;
+// --- Controller liveness check ---
+// Controllers send heartbeats every 2s. The server marks isAlive=true on any
+// incoming message and periodically checks that controllers are still alive.
+// Display connections (stable desktop browsers) are not checked.
+const LIVENESS_CHECK_MS = 5000;
 
-const heartbeat = setInterval(() => {
+const livenessInterval = setInterval(() => {
   for (const ws of wss.clients) {
+    const info = clientInfo.get(ws);
+    if (!info || info.type !== 'controller') continue;
     if (ws.isAlive === false) {
       ws.terminate();
       continue;
     }
     ws.isAlive = false;
-    ws.ping();
   }
-}, HEARTBEAT_INTERVAL_MS);
+}, LIVENESS_CHECK_MS);
 
-wss.on('close', () => clearInterval(heartbeat));
+wss.on('close', () => clearInterval(livenessInterval));
 
 wss.on('connection', (ws) => {
   ws.isAlive = true;
-  ws.on('pong', () => { ws.isAlive = true; });
   ws.on('message', (raw) => {
+    ws.isAlive = true;
     let msg;
     try {
       msg = JSON.parse(raw);
@@ -318,6 +322,9 @@ function handleControllerMessage(room, playerId, msg) {
       if (playerId === room.hostId) {
         room.resumeGame();
       }
+      break;
+    case MSG.HEARTBEAT:
+      // Keepalive — isAlive already set on message receipt
       break;
   }
 }

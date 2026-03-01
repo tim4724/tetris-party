@@ -43,6 +43,7 @@
   const statusText = document.getElementById('status-text');
   const statusDetail = document.getElementById('status-detail');
   const rejoinBtn = document.getElementById('rejoin-btn');
+  const disconnectBtn = document.getElementById('disconnect-btn');
   const playerNameEl = document.getElementById('player-name');
   const playerIdentityName = document.getElementById('player-identity-name');
   const touchArea = document.getElementById('touch-area');
@@ -251,6 +252,7 @@
 
     ws.onopen = function () {
       reconnectAttempts = 0;
+      startHeartbeat();
       // Best-effort "connected" haptic feedback.
       vibrate(10);
       const token = sessionStorage.getItem('reconnectToken_' + roomCode);
@@ -274,6 +276,7 @@
     };
 
     ws.onclose = function () {
+      stopHeartbeat();
       if (currentScreen === 'gameover' || gameCancelled) return;
       attemptReconnect();
     };
@@ -283,8 +286,30 @@
     };
   }
 
+  // Heartbeat — send keepalive if no message sent recently
+  var HEARTBEAT_MS = 2000;
+  var lastSendTime = 0;
+  var heartbeatTimer = null;
+
+  function startHeartbeat() {
+    stopHeartbeat();
+    heartbeatTimer = setInterval(function () {
+      if (Date.now() - lastSendTime >= HEARTBEAT_MS) {
+        send(MSG.HEARTBEAT);
+      }
+    }, HEARTBEAT_MS);
+  }
+
+  function stopHeartbeat() {
+    if (heartbeatTimer) {
+      clearInterval(heartbeatTimer);
+      heartbeatTimer = null;
+    }
+  }
+
   function send(type, payload) {
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    lastSendTime = Date.now();
     ws.send(JSON.stringify(Object.assign({ type: type }, payload)));
   }
 
@@ -420,6 +445,7 @@
     lobbyTitle.classList.add('hidden');
     nameForm.classList.add('hidden');
     playerIdentity.classList.add('hidden');
+    disconnectBtn.classList.add('hidden');
     startBtn.classList.add('hidden');
   }
 
@@ -444,6 +470,7 @@
     playerIdentity.style.setProperty('--player-color', playerColor);
     playerIdentityName.textContent = playerName || ('Player ' + playerId);
     playerIdentity.classList.remove('hidden');
+    disconnectBtn.classList.remove('hidden');
 
     if (isHost) {
       startBtn.classList.remove('hidden');
@@ -768,6 +795,43 @@
     statusText.textContent = 'Connecting...';
     statusDetail.textContent = '';
     connect();
+  });
+
+  // Disconnect button — close WS and return to name form
+  disconnectBtn.addEventListener('click', function () {
+    // Suppress reconnect on close
+    if (ws) {
+      ws.onclose = null;
+      ws.onerror = null;
+      try { ws.close(); } catch (_) {}
+      ws = null;
+    }
+    // Clear session tokens
+    sessionStorage.removeItem('reconnectToken_' + roomCode);
+    sessionStorage.removeItem('playerId_' + roomCode);
+    // Remove ?player= from URL
+    var params = new URLSearchParams(location.search);
+    params.delete('player');
+    params.delete('rejoin');
+    var qs = params.toString();
+    history.replaceState(null, '', location.pathname + (qs ? '?' + qs : ''));
+    rejoinId = null;
+    // Reset state
+    playerId = null;
+    playerColor = null;
+    isHost = false;
+    gameCancelled = false;
+    reconnectAttempts = 0;
+    clearTimeout(reconnectTimer);
+    // Hide lobby elements, show name form with current name pre-filled
+    hideLobbyElements();
+    lobbyTitle.classList.remove('hidden');
+    nameInput.value = playerName || '';
+    nameForm.classList.remove('hidden');
+    statusText.textContent = '';
+    statusDetail.textContent = '';
+    showScreen('waiting');
+    nameInput.focus();
   });
 
   // Start button (host only)

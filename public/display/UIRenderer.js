@@ -85,7 +85,7 @@ class UIRenderer {
     const fontSize = Math.max(12, this.cellSize * THEME.font.cellScale.name);
 
     // Name text
-    ctx.fillStyle = THEME.color.text.white;
+    ctx.fillStyle = playerState.playerColor || THEME.color.text.white;
     ctx.font = `700 ${fontSize}px ${this._labelFont}`;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'bottom';

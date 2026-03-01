@@ -8,6 +8,7 @@ const MSG = {
   INPUT: 'input',
   SOFT_DROP_START: 'soft_drop_start',
   SOFT_DROP_END: 'soft_drop_end',
+  HEARTBEAT: 'heartbeat',
 
   // Server → Controller
   JOINED: 'joined',

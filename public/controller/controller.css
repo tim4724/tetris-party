@@ -113,9 +113,9 @@ html, body {
 
 /* Waiting screen */
 #waiting-screen {
-  gap: 24px;
-  justify-content: center;
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  gap: 32px;
+  justify-content: flex-start;
+  padding: max(env(safe-area-inset-top), 24px) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   background:
     radial-gradient(ellipse at 50% 30%, rgba(0, 100, 255, 0.06) 0%, transparent 60%),
     radial-gradient(ellipse at 50% 80%, rgba(0, 255, 136, 0.04) 0%, transparent 50%);
@@ -152,6 +152,7 @@ html, body {
   -webkit-text-fill-color: transparent;
   background-clip: text;
   filter: drop-shadow(0 0 8px rgba(0, 200, 255, 0.15));
+  margin-bottom: clamp(16px, 6vh, 48px);
   animation: lobbyFadeDown 0.5s ease-out both;
 }
 
@@ -242,6 +243,27 @@ html, body {
 
 #rejoin-btn:active {
   background: rgba(0, 200, 255, 0.1);
+  transform: scale(0.95);
+}
+
+#disconnect-btn {
+  margin-top: auto;
+  margin-bottom: max(env(safe-area-inset-bottom), 24px);
+  padding: 0.75rem 2rem;
+  border: 1.5px solid rgba(255, 80, 80, 0.5);
+  border-radius: var(--radius-md);
+  background: transparent;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: rgba(255, 80, 80, 0.9);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+#disconnect-btn:active {
+  background: rgba(255, 80, 80, 0.1);
   transform: scale(0.95);
 }
 

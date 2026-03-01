@@ -62,7 +62,6 @@ const COMBO_GARBAGE = [0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 4, 5];
 const MAX_PLAYERS = 4;
 const ROOM_CODE_LENGTH = 4;
 const ROOM_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
-
 // Countdown
 const COUNTDOWN_SECONDS = 3;
 
