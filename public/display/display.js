@@ -640,6 +640,9 @@ function renderResults(results) {
       row.appendChild(rank);
     }
 
+    const info = document.createElement('div');
+    info.className = 'result-info';
+
     const nameEl = document.createElement('span');
     nameEl.className = 'result-name';
     const pInfo = players.get(res.playerId);
@@ -650,10 +653,11 @@ function renderResults(results) {
 
     const stats = document.createElement('div');
     stats.className = 'result-stats';
-    stats.innerHTML = `<span>Score: ${res.score || 0}</span><span>Lines: ${res.lines || 0}</span><span>Lv ${res.level || 1}</span>`;
+    stats.innerHTML = `<span>${(res.score || 0).toLocaleString()} points</span><span>${res.lines || 0} lines</span><span>Lv ${res.level || 1}</span>`;
 
-    row.appendChild(nameEl);
-    row.appendChild(stats);
+    info.appendChild(nameEl);
+    info.appendChild(stats);
+    row.appendChild(info);
     resultsList.appendChild(row);
   });
 }

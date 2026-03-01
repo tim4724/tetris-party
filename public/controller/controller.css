@@ -540,25 +540,29 @@ html, body {
 .result-info {
   flex: 1;
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: baseline;
+  gap: clamp(0.6rem, 3vw, 1.2rem);
   min-width: 0;
 }
 
 .result-name {
-  font-size: clamp(0.8rem, 3.8vw, 1.05rem);
-  font-weight: 700;
+  font-size: clamp(1rem, 5vw, 1.4rem);
+  font-weight: 900;
   letter-spacing: 0.03em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  flex-shrink: 1;
 }
 
-.result-score {
-  font-size: 12px;
+.result-stats {
+  display: flex;
+  gap: clamp(0.5rem, 2.5vw, 1rem);
+  font-size: clamp(0.85rem, 4vw, 1.2rem);
   font-variant-numeric: tabular-nums;
   color: rgba(160, 160, 200, 0.5);
   letter-spacing: 0.02em;
+  flex-shrink: 0;
 }
 
 #gameover-buttons {

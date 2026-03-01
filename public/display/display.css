@@ -477,20 +477,33 @@ html, body {
 .result-rank {
   font-size: clamp(1.2rem, 2.5vh, 2.2rem);
   font-weight: 700;
-  width: 2.5rem;
+  width: 4rem;
+  flex-shrink: 0;
+}
+
+.result-info {
+  flex: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 1.5rem;
+  min-width: 0;
 }
 
 .result-name {
-  flex: 1;
-  font-size: clamp(0.85rem, 1.8vh, 1.3rem);
-  font-weight: 500;
+  font-size: clamp(1.2rem, 2.5vh, 2.2rem);
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 1;
 }
 
 .result-stats {
   display: flex;
   gap: 1.5rem;
-  font-size: clamp(0.75rem, 1.4vh, 1rem);
+  font-size: clamp(1rem, 2.2vh, 1.8rem);
   color: var(--text-secondary);
+  flex-shrink: 0;
 }
 
 .result-stats span {

@@ -534,7 +534,7 @@
 
   function renderGameResults(results) {
     resultsList.innerHTML = '';
-    gameoverTitle.textContent = 'RESULTS';
+    gameoverTitle.textContent = 'GAME OVER';
 
     // Show buttons for host, status text for others
     gameoverButtons.classList.toggle('hidden', !isHost);
@@ -584,12 +584,12 @@
       nameEl.textContent = r.playerName || ('Player ' + r.playerId);
       nameEl.style.color = pColor;
 
-      var scoreEl = document.createElement('span');
-      scoreEl.className = 'result-score';
-      scoreEl.textContent = (r.score || 0).toLocaleString() + ' pts';
+      var stats = document.createElement('div');
+      stats.className = 'result-stats';
+      stats.innerHTML = '<span>' + (r.score || 0).toLocaleString() + ' points</span><span>' + (r.lines || 0) + ' lines</span><span>Lv ' + (r.level || 1) + '</span>';
 
       info.appendChild(nameEl);
-      info.appendChild(scoreEl);
+      info.appendChild(stats);
       row.appendChild(info);
       resultsList.appendChild(row);
     }
