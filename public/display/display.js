@@ -301,25 +301,8 @@ function renderTetrisQR(canvas, qrMatrix) {
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, totalPx, totalPx);
 
-  // Finder pattern detection (7x7 squares at three corners)
-  function isFinderPattern(r, c) {
-    if (r < 7 && c < 7) return true;           // top-left
-    if (r < 7 && c >= size - 7) return true;    // top-right
-    if (r >= size - 7 && c < 7) return true;    // bottom-left
-    return false;
-  }
-
-  // Curated palette — 5 high-contrast Tetris colors (no yellow for scannability)
-  const palette = [
-    PIECE_COLORS[1], // I - cyan
-    PIECE_COLORS[6], // T - purple
-    PIECE_COLORS[7], // Z - red
-    PIECE_COLORS[2], // J - blue
-    PIECE_COLORS[3], // L - orange
-  ];
-  const finderColor = '#1a1a2e'; // dark near-black for finder patterns — max contrast
-
-  const inset = Math.max(0.5, cellPx * 0.03); // near-zero gap — tight blocks
+  const color = PIECE_COLORS[2]; // J - dark blue
+  const inset = Math.max(0.5, cellPx * 0.03);
   const radius = Math.max(1, cellPx * 0.15);
 
   for (let row = 0; row < size; row++) {
@@ -332,15 +315,6 @@ function renderTetrisQR(canvas, qrMatrix) {
       const y = row * cellPx;
       const s = cellPx;
 
-      // Pick color: finder patterns get a single dark color, data modules get smooth diagonal gradient
-      let color;
-      if (isFinderPattern(row, col)) {
-        color = finderColor;
-      } else {
-        const t = (row + col) / (size * 0.8);
-        color = palette[Math.floor(t * palette.length) % palette.length];
-      }
-
       // Rounded rect with vertical gradient
       const grad = ctx.createLinearGradient(x, y, x, y + s);
       grad.addColorStop(0, _lighten(color, 15));
@@ -351,23 +325,21 @@ function renderTetrisQR(canvas, qrMatrix) {
       ctx.fill();
 
       // Top highlight
-      ctx.fillStyle = `rgba(255, 255, 255, ${isFinderPattern(row, col) ? 0.15 : 0.35})`;
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
       ctx.fillRect(x + inset + radius, y + inset, s - inset * 2 - radius * 2, Math.max(1, s * 0.08));
 
       // Left highlight
-      ctx.fillStyle = `rgba(255, 255, 255, ${isFinderPattern(row, col) ? 0.08 : 0.15})`;
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
       ctx.fillRect(x + inset, y + inset + radius, Math.max(1, s * 0.07), s - inset * 2 - radius * 2);
 
       // Bottom shadow
       ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
       ctx.fillRect(x + inset + radius, y + s - inset - Math.max(1, s * 0.08), s - inset * 2 - radius * 2, Math.max(1, s * 0.08));
 
-      // Inner shine (skip on dark finder blocks)
-      if (!isFinderPattern(row, col)) {
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
-        const shineSize = s * 0.25;
-        ctx.fillRect(x + s * 0.25, y + s * 0.2, shineSize, shineSize * 0.5);
-      }
+      // Inner shine
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+      const shineSize = s * 0.25;
+      ctx.fillRect(x + s * 0.25, y + s * 0.2, shineSize, shineSize * 0.5);
     }
   }
 }

@@ -194,6 +194,18 @@ class Room {
     };
   }
 
+  getQRMatrix(text) {
+    try {
+      const qr = QRCode.create(text, { errorCorrectionLevel: 'M' });
+      const size = qr.modules.size;
+      const modules = Array.from(qr.modules.data);
+      return { size, modules };
+    } catch (err) {
+      console.error('QR matrix generation failed:', err);
+      return null;
+    }
+  }
+
   async getQRUrl(joinUrl) {
     try {
       return await QRCode.toDataURL(joinUrl, { width: 256, margin: 1 });

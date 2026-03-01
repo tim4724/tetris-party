@@ -167,9 +167,9 @@ async function handleNewConnection(ws, msg) {
       joinUrl = `http://${localIP}:${PORT}/${roomCode}`;
     }
     room.joinUrl = joinUrl;
-    const qrDataUrl = await room.getQRUrl(joinUrl);
+    const qrMatrix = room.getQRMatrix(joinUrl);
 
-    send(ws, MSG.ROOM_CREATED, { roomCode, qrDataUrl, joinUrl });
+    send(ws, MSG.ROOM_CREATED, { roomCode, qrMatrix, joinUrl });
     console.log(`Room ${roomCode} created. Join: ${joinUrl}`);
 
   } else if (msg.type === MSG.JOIN) {

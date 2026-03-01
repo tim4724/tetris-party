@@ -161,15 +161,6 @@ html, body {
   box-shadow: 0 0 24px rgba(0, 200, 255, 0.08);
 }
 
-#room-code {
-  font-family: 'Orbitron', sans-serif;
-  font-size: clamp(1.5rem, 3.5vh, 4rem);
-  font-weight: 700;
-  letter-spacing: 0.25em;
-  margin-top: clamp(0.4rem, 1vh, 1rem);
-  color: #fff;
-}
-
 #join-url {
   font-size: clamp(0.7rem, 1.4vh, 1.1rem);
   color: var(--text-secondary);
