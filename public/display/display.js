@@ -61,6 +61,11 @@ function showScreen(name) {
     calculateLayout();
   }
 
+  // Ensure player slots are visible as soon as the lobby appears
+  if (name === 'lobby') {
+    updatePlayerList();
+  }
+
   // Manage falling tetromino background (shared across welcome + lobby)
   if (welcomeBg) {
     if (name === 'welcome' || name === 'lobby') welcomeBg.start();
@@ -400,26 +405,59 @@ function onPlayerReconnected(msg) {
 }
 
 // --- Lobby UI ---
+const SLOT_LABELS = ['P1', 'P2', 'P3', 'P4'];
+const MAX_SLOTS = 4;
+
 function updatePlayerList() {
-  playerListEl.innerHTML = '';
-  for (const [id, info] of players) {
-    const card = document.createElement('div');
-    card.className = 'player-card';
-    card.dataset.playerId = id;
+  // Create 4 permanent slot elements on first call
+  if (playerListEl.children.length === 0) {
+    for (let i = 0; i < MAX_SLOTS; i++) {
+      const card = document.createElement('div');
+      card.className = 'player-card empty';
 
-    const color = info.playerColor || PLAYER_COLORS[info.playerIndex] || '#fff';
-    card.style.setProperty('--player-color', color);
+      const dot = document.createElement('span');
+      dot.className = 'color-dot';
 
-    const dot = document.createElement('span');
-    dot.className = 'color-dot';
-    dot.style.backgroundColor = color;
+      const name = document.createElement('span');
+      name.textContent = SLOT_LABELS[i];
 
-    const name = document.createElement('span');
-    name.textContent = info.playerName || PLAYER_NAMES[info.playerIndex] || 'Player';
+      card.appendChild(dot);
+      card.appendChild(name);
+      playerListEl.appendChild(card);
+    }
+  }
 
-    card.appendChild(dot);
-    card.appendChild(name);
-    playerListEl.appendChild(card);
+  // Reconcile each slot in place
+  for (let i = 0; i < MAX_SLOTS; i++) {
+    const card = playerListEl.children[i];
+    const dot = card.querySelector('.color-dot');
+    const nameEl = card.querySelector('span:last-child');
+    const playerId = playerOrder[i];
+    const info = playerId ? players.get(playerId) : null;
+    const wasEmpty = card.classList.contains('empty');
+
+    if (info) {
+      const color = info.playerColor || PLAYER_COLORS[info.playerIndex] || '#fff';
+      card.style.setProperty('--player-color', color);
+      dot.style.backgroundColor = color;
+      nameEl.textContent = info.playerName || PLAYER_NAMES[info.playerIndex] || 'Player';
+      card.classList.remove('empty');
+      card.dataset.playerId = playerId;
+
+      // Trigger join celebration only on empty-to-filled transition
+      if (wasEmpty) {
+        card.classList.remove('join-pop');
+        void card.offsetWidth; // force reflow to restart animation
+        card.classList.add('join-pop');
+      }
+    } else {
+      card.style.removeProperty('--player-color');
+      dot.style.backgroundColor = '';
+      nameEl.textContent = SLOT_LABELS[i];
+      card.classList.add('empty');
+      card.classList.remove('join-pop');
+      delete card.dataset.playerId;
+    }
   }
 }
 
@@ -504,7 +542,7 @@ function renderResults(results) {
     const nameEl = document.createElement('span');
     nameEl.className = 'result-name';
     const pInfo = players.get(r.playerId);
-    nameEl.textContent = pInfo?.playerName || `Player ${r.playerId}`;
+    nameEl.textContent = r.playerName || pInfo?.playerName || `Player ${r.playerId}`;
     if (pInfo) {
       nameEl.style.color = pInfo.playerColor || PLAYER_COLORS[pInfo.playerIndex];
     }

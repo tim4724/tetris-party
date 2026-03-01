@@ -66,9 +66,12 @@ class Room {
     const isHost = this.hostId === null;
     if (isHost) this.hostId = playerId;
 
+    const cleanName = typeof name === 'string' ? name.trim().slice(0, 16) : '';
+    const playerName = cleanName || `Player ${playerId}`;
+
     this.players.set(playerId, {
       ws,
-      name: name || `Player ${playerId}`,
+      name: playerName,
       color,
       reconnectToken,
       connected: true,
@@ -78,14 +81,14 @@ class Room {
     // Notify display
     this.sendToDisplay(MSG.PLAYER_JOINED, {
       playerId,
-      playerName: name || `Player ${playerId}`,
+      playerName,
       playerColor: color,
       playerCount: this.players.size
     });
 
     this.broadcastLobbyUpdate();
 
-    return { playerId, color, reconnectToken, isHost };
+    return { playerId, name: playerName, color, reconnectToken, isHost };
   }
 
   removePlayer(playerId) {
@@ -184,6 +187,7 @@ class Room {
 
     return {
       playerId,
+      name: player.name,
       color: player.color,
       reconnectToken,
       isHost: playerId === this.hostId
@@ -369,6 +373,13 @@ class Room {
 
   onGameEnd(results) {
     this.state = ROOM_STATE.RESULTS;
+    // Enrich results with player names
+    if (results && results.results) {
+      for (const r of results.results) {
+        const player = this.players.get(r.playerId);
+        if (player) r.playerName = player.name;
+      }
+    }
     this.broadcast(MSG.GAME_END, results);
   }
 

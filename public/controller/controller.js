@@ -5,10 +5,11 @@
   let ws = null;
   let playerId = null;
   let playerColor = null;
+  let playerName = null;
   let roomCode = null;
   let inputSeq = 0;
   let touchInput = null;
-  let currentScreen = 'waiting';
+  let currentScreen = 'name';
   let reconnectAttempts = 0;
   const MAX_RECONNECT_ATTEMPTS = 5;
   const RECONNECT_INTERVAL = 2000;
@@ -18,6 +19,9 @@
   let gameCancelled = false;
 
   // DOM refs
+  const nameScreen = document.getElementById('name-screen');
+  const nameInput = document.getElementById('name-input');
+  const nameJoinBtn = document.getElementById('name-join-btn');
   const waitingScreen = document.getElementById('waiting-screen');
   const gameScreen = document.getElementById('game-screen');
   const gameoverScreen = document.getElementById('gameover-screen');
@@ -55,6 +59,7 @@
   // Screen management
   function showScreen(name) {
     currentScreen = name;
+    nameScreen.classList.toggle('hidden', name !== 'name');
     waitingScreen.classList.toggle('hidden', name !== 'waiting');
     gameScreen.classList.toggle('hidden', name !== 'game');
     gameoverScreen.classList.toggle('hidden', name !== 'gameover');
@@ -64,10 +69,32 @@
   roomCode = location.pathname.split('/').filter(Boolean)[0] || null;
   const rejoinId = new URLSearchParams(location.search).get('rejoin');
   if (!roomCode) {
+    showScreen('waiting');
     statusText.textContent = 'No Room Code';
     statusDetail.textContent = 'Scan a QR code or use a join link';
     return;
   }
+
+  // --- Name input ---
+  var savedName = localStorage.getItem('tetris_player_name') || '';
+  nameInput.value = savedName;
+
+  function submitName() {
+    var name = nameInput.value.trim();
+    if (name) {
+      playerName = name;
+      localStorage.setItem('tetris_player_name', name);
+    }
+    showScreen('waiting');
+    statusText.textContent = 'Connecting...';
+    statusDetail.textContent = '';
+    connect();
+  }
+
+  nameJoinBtn.addEventListener('click', submitName);
+  nameInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') submitName();
+  });
 
   function vibrate(pattern) {
     if (!navigator.vibrate) return;
@@ -202,9 +229,9 @@
       if (token) {
         send(MSG.REJOIN, { roomCode: roomCode, reconnectToken: token });
       } else if (rejoinId) {
-        send(MSG.JOIN, { roomCode: roomCode, rejoinId: rejoinId });
+        send(MSG.JOIN, { roomCode: roomCode, rejoinId: rejoinId, name: playerName });
       } else {
-        send(MSG.JOIN, { roomCode: roomCode });
+        send(MSG.JOIN, { roomCode: roomCode, name: playerName });
       }
     };
 
@@ -315,8 +342,11 @@
     }
     sessionStorage.setItem('playerId_' + roomCode, data.playerId);
 
-    const name = PLAYER_NAMES[playerId - 1] || ('Player ' + playerId);
-    playerNameEl.textContent = name;
+    // Use server-confirmed name, falling back to local name or generic
+    if (data.playerName) playerName = data.playerName;
+    if (!playerName) playerName = PLAYER_NAMES[playerId - 1] || ('Player ' + playerId);
+
+    playerNameEl.textContent = playerName;
     playerIndicator.style.background = playerColor;
     playerIndicator.style.color = playerColor;
 
@@ -369,9 +399,8 @@
     playerCountEl.classList.add('hidden');
     rejoinBtn.classList.add('hidden');
 
-    var name = PLAYER_NAMES[playerId - 1] || ('Player ' + playerId);
     playerIdentity.style.setProperty('--id-color', playerColor);
-    playerIdentityName.textContent = name;
+    playerIdentityName.textContent = playerName || ('Player ' + playerId);
     playerIdentity.classList.remove('hidden');
 
     if (isHost) {
@@ -507,7 +536,7 @@
 
       var nameEl = document.createElement('span');
       nameEl.className = 'result-name';
-      nameEl.textContent = PLAYER_NAMES[r.playerId - 1] || ('Player ' + r.playerId);
+      nameEl.textContent = r.playerName || ('Player ' + r.playerId);
       nameEl.style.color = pColor;
 
       var scoreEl = document.createElement('span');
@@ -762,7 +791,7 @@
   // controller picks up the current room state.
   document.addEventListener('visibilitychange', function () {
     if (document.visibilityState !== 'visible') return;
-    if (currentScreen === 'gameover' || gameCancelled) return;
+    if (currentScreen === 'name' || currentScreen === 'gameover' || gameCancelled) return;
     // Tear down the (possibly stale) connection and reconnect immediately.
     reconnectAttempts = 0;
     clearTimeout(reconnectTimer);
@@ -776,6 +805,16 @@
     connect();
   });
 
-  // Start connection
-  connect();
+  // If we have a reconnect token or rejoin ID, skip name entry and connect immediately
+  var hasToken = sessionStorage.getItem('reconnectToken_' + roomCode);
+  if (hasToken || rejoinId) {
+    playerName = savedName || null;
+    showScreen('waiting');
+    statusText.textContent = 'Connecting...';
+    statusDetail.textContent = '';
+    connect();
+  } else {
+    showScreen('name');
+    nameInput.focus();
+  }
 })();

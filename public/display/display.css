@@ -179,36 +179,61 @@ html, body {
 
 #player-list {
   display: flex;
-  gap: clamp(0.5rem, 1vw, 1rem);
-  flex-wrap: wrap;
+  gap: clamp(0.6rem, 1.2vw, 1.2rem);
   justify-content: center;
   margin-top: auto;
-  min-height: clamp(36px, 5vh, 60px);
+  min-height: clamp(50px, 8vh, 90px);
   animation: fadeIn 0.4s 0.3s ease-out both;
 }
 
 .player-card {
   display: flex;
   align-items: center;
-  gap: clamp(0.3rem, 0.5vw, 0.6rem);
-  padding: clamp(0.3rem, 0.8vh, 0.7rem) clamp(0.6rem, 1.2vw, 1.4rem);
-  border-radius: 8px;
+  justify-content: center;
+  gap: clamp(0.4rem, 0.7vw, 0.8rem);
+  padding: clamp(0.6rem, 1.2vh, 1rem) clamp(1.2rem, 2vw, 2.2rem);
+  border-radius: var(--radius-md);
   background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--player-color, var(--border));
-  box-shadow: inset 3px 0 8px -3px var(--player-color, transparent);
+  border: 2px solid var(--player-color, var(--border));
+  box-shadow: 0 0 16px -4px var(--player-color, transparent);
   font-family: 'Orbitron', sans-serif;
-  font-size: clamp(0.75rem, 1.5vh, 1.2rem);
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  animation: fadeIn 0.3s ease both;
+  font-size: clamp(0.9rem, 2vh, 1.4rem);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--text-primary);
+  min-width: clamp(100px, 12vw, 180px);
 }
 
 .player-card .color-dot {
-  width: clamp(10px, 1.4vh, 18px);
-  height: clamp(10px, 1.4vh, 18px);
+  width: clamp(12px, 1.8vh, 22px);
+  height: clamp(12px, 1.8vh, 22px);
   border-radius: 50%;
-  box-shadow: 0 0 6px currentColor;
+  flex-shrink: 0;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.player-card.empty {
+  background: transparent;
+  border: 2px dashed rgba(255, 255, 255, 0.1);
+  box-shadow: none;
+  opacity: 0.35;
+}
+
+.player-card.empty .color-dot {
+  background: transparent !important;
+  border: 2px dashed rgba(255, 255, 255, 0.25);
+  box-shadow: none;
+}
+
+@keyframes slotPopIn {
+  0%   { transform: scale(0.6); opacity: 0; }
+  60%  { transform: scale(1.08); opacity: 1; }
+  80%  { transform: scale(0.96); }
+  100% { transform: scale(1); }
+}
+
+.player-card.join-pop {
+  animation: slotPopIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
 #start-btn {

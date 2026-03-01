@@ -186,6 +186,7 @@ async function handleNewConnection(ws, msg) {
         clientInfo.set(ws, { roomCode: msg.roomCode, playerId: result.playerId, type: 'controller' });
         send(ws, MSG.JOINED, {
           playerId: result.playerId,
+          playerName: result.name,
           playerColor: result.color,
           reconnectToken: result.reconnectToken,
           isHost: result.isHost,
@@ -204,12 +205,13 @@ async function handleNewConnection(ws, msg) {
       clientInfo.set(ws, { roomCode: msg.roomCode, playerId: result.playerId, type: 'controller' });
       send(ws, MSG.JOINED, {
         playerId: result.playerId,
+        playerName: result.name,
         playerColor: result.color,
         reconnectToken: result.reconnectToken,
         isHost: result.isHost,
         playerCount: room.players.size
       });
-      console.log(`Player ${result.playerId} joined room ${msg.roomCode}`);
+      console.log(`Player ${result.playerId} (${result.name}) joined room ${msg.roomCode}`);
     }
 
   } else if (msg.type === MSG.REJOIN) {
@@ -225,6 +227,7 @@ async function handleNewConnection(ws, msg) {
       clientInfo.set(ws, { roomCode: msg.roomCode, playerId, type: 'controller' });
       send(ws, MSG.JOINED, {
         playerId,
+        playerName: player.name,
         playerColor: player.color,
         reconnected: true,
         isHost: playerId === room.hostId,
