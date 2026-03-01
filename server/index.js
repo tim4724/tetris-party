@@ -301,6 +301,9 @@ function handleControllerMessage(room, playerId, msg) {
         room.resumeGame();
       }
       break;
+    case MSG.CHANGE_NAME:
+      room.changeName(playerId, msg.name);
+      break;
   }
 }
 

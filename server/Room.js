@@ -91,6 +91,25 @@ class Room {
     return { playerId, name: playerName, color, reconnectToken, isHost };
   }
 
+  changeName(playerId, newName) {
+    const player = this.players.get(playerId);
+    if (!player) return;
+
+    const clean = typeof newName === 'string' ? newName.trim().slice(0, 16) : '';
+    if (!clean) return;
+
+    player.name = clean;
+    send(player.ws, MSG.NAME_CHANGED, { name: clean });
+
+    // Notify display so the player card updates
+    this.sendToDisplay(MSG.PLAYER_JOINED, {
+      playerId,
+      playerName: clean,
+      playerColor: player.color,
+      playerCount: this.players.size
+    });
+  }
+
   removePlayer(playerId) {
     const player = this.players.get(playerId);
     if (!player) return;
@@ -290,18 +309,22 @@ class Room {
     });
   }
 
-  startCountdown(onComplete) {
-    let count = COUNTDOWN_SECONDS;
+  startCountdown(onComplete, startFrom) {
+    let count = startFrom || COUNTDOWN_SECONDS;
+    this._countdownCallback = onComplete;
+    this._countdownRemaining = count;
 
     this.broadcast(MSG.COUNTDOWN, { value: count });
 
     this.countdownTimer = setInterval(() => {
       count--;
+      this._countdownRemaining = count;
       if (count > 0) {
         this.broadcast(MSG.COUNTDOWN, { value: count });
       } else {
         clearInterval(this.countdownTimer);
         this.countdownTimer = null;
+        this._countdownRemaining = 0;
         // Send final "GO" so clients know to clear overlay
         this.broadcast(MSG.COUNTDOWN, { value: 'GO' });
         setTimeout(() => onComplete(), 500);
@@ -310,15 +333,26 @@ class Room {
   }
 
   pauseGame() {
-    if (this.state !== ROOM_STATE.PLAYING || this.paused) return;
+    if (this.paused) return;
+    if (this.state !== ROOM_STATE.PLAYING && this.state !== ROOM_STATE.COUNTDOWN) return;
     this.paused = true;
+    if (this.state === ROOM_STATE.COUNTDOWN && this.countdownTimer) {
+      clearInterval(this.countdownTimer);
+      this.countdownTimer = null;
+    }
     if (this.game) this.game.pause();
     this.broadcast(MSG.GAME_PAUSED, {});
   }
 
   resumeGame() {
-    if (this.state !== ROOM_STATE.PLAYING || !this.paused) return;
+    if (!this.paused) return;
+    if (this.state !== ROOM_STATE.PLAYING && this.state !== ROOM_STATE.COUNTDOWN) return;
     this.paused = false;
+    if (this.state === ROOM_STATE.COUNTDOWN && this._countdownCallback) {
+      this.broadcast(MSG.GAME_RESUMED, {});
+      this.startCountdown(this._countdownCallback, this._countdownRemaining);
+      return;
+    }
     if (this.game) this.game.resume();
     this.broadcast(MSG.GAME_RESUMED, {});
   }

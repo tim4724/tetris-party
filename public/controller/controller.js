@@ -9,7 +9,7 @@
   let roomCode = null;
   let inputSeq = 0;
   let touchInput = null;
-  let currentScreen = 'name';
+  let currentScreen = 'waiting';
   let reconnectAttempts = 0;
   const MAX_RECONNECT_ATTEMPTS = 5;
   const RECONNECT_INTERVAL = 2000;
@@ -31,16 +31,13 @@
   }
 
   // DOM refs
-  const nameScreen = document.getElementById('name-screen');
+  const nameForm = document.getElementById('name-form');
   const nameInput = document.getElementById('name-input');
   const nameJoinBtn = document.getElementById('name-join-btn');
   const waitingScreen = document.getElementById('waiting-screen');
   const gameScreen = document.getElementById('game-screen');
   const gameoverScreen = document.getElementById('gameover-screen');
   const lobbyTitle = document.getElementById('lobby-title');
-  const roomCodeBox = document.getElementById('room-code-box');
-  const roomCodeValue = document.getElementById('room-code-value');
-  const playerCountEl = document.getElementById('player-count');
   const playerIdentity = document.getElementById('player-identity');
   const startBtn = document.getElementById('start-btn');
   const statusText = document.getElementById('status-text');
@@ -78,17 +75,19 @@
     muteBtn.querySelector('.sound-waves').style.display = muted ? 'none' : '';
   });
 
+  // Edit mode state
+  let editingName = false;
+
   // Screen management
   function showScreen(name) {
     currentScreen = name;
-    nameScreen.classList.toggle('hidden', name !== 'name');
     waitingScreen.classList.toggle('hidden', name !== 'waiting');
     gameScreen.classList.toggle('hidden', name !== 'game');
     gameoverScreen.classList.toggle('hidden', name !== 'gameover');
 
-    // Falling blocks on name/waiting screens only
+    // Falling blocks on waiting screen only
     if (welcomeBg) {
-      if (name === 'name' || name === 'waiting') {
+      if (name === 'waiting') {
         welcomeBg.start();
       } else {
         welcomeBg.stop();
@@ -108,23 +107,52 @@
 
   // --- Name input ---
   var savedName = localStorage.getItem('tetris_player_name') || '';
-  nameInput.value = savedName;
 
   function submitName() {
     var name = nameInput.value.trim();
-    if (name) {
-      playerName = name;
-      localStorage.setItem('tetris_player_name', name);
+    if (!name) return;
+
+    if (editingName && ws && ws.readyState === WebSocket.OPEN) {
+      // Already connected — send name change, exit edit mode
+      send(MSG.CHANGE_NAME, { name: name });
+      exitEditMode();
+      return;
     }
-    showScreen('waiting');
+
+    // Not connected yet — join flow
+    playerName = name;
+    localStorage.setItem('tetris_player_name', name);
+    nameForm.classList.add('hidden');
     statusText.textContent = 'Connecting...';
     statusDetail.textContent = '';
     connect();
   }
 
+  function enterEditMode() {
+    editingName = true;
+    nameInput.value = playerName || '';
+    nameJoinBtn.textContent = 'SAVE';
+    nameForm.classList.remove('hidden');
+    playerIdentity.classList.add('hidden');
+    nameInput.focus();
+  }
+
+  function exitEditMode() {
+    editingName = false;
+    nameJoinBtn.textContent = 'JOIN';
+    nameForm.classList.add('hidden');
+    playerIdentity.classList.remove('hidden');
+  }
+
   nameJoinBtn.addEventListener('click', submitName);
   nameInput.addEventListener('keydown', function (e) {
     if (e.key === 'Enter') submitName();
+  });
+
+  // Tap player card to edit name
+  document.getElementById('player-identity-card').addEventListener('click', function () {
+    if (currentScreen !== 'waiting') return;
+    enterEditMode();
   });
 
   function vibrate(pattern) {
@@ -318,6 +346,12 @@
       case MSG.JOINED:
         onJoined(data);
         break;
+      case MSG.NAME_CHANGED:
+        playerName = data.name;
+        playerIdentityName.textContent = data.name;
+        playerNameEl.textContent = data.name;
+        localStorage.setItem('tetris_player_name', data.name);
+        break;
       case MSG.LOBBY_UPDATE:
         onLobbyUpdate(data);
         break;
@@ -332,7 +366,7 @@
           gameScreen.classList.add('countdown');
           gameScreen.style.setProperty('--player-color', playerColor);
           pauseOverlay.classList.add('hidden');
-          pauseBtn.disabled = true;
+          pauseBtn.disabled = false;
           pauseBtn.classList.toggle('hidden', !isHost);
           hideLobbyElements();
           showScreen('game');
@@ -416,12 +450,7 @@
     if (typeof data.isHost === 'boolean') {
       isHost = data.isHost;
     }
-    updatePlayerCount();
     if (isHost) updateStartButton();
-  }
-
-  function updatePlayerCount() {
-    playerCountEl.textContent = playerCount + (playerCount === 1 ? ' player' : ' players');
   }
 
   function updateStartButton() {
@@ -430,17 +459,17 @@
 
   function hideLobbyElements() {
     lobbyTitle.classList.add('hidden');
-    roomCodeBox.classList.add('hidden');
-    playerCountEl.classList.add('hidden');
+    nameForm.classList.add('hidden');
     playerIdentity.classList.add('hidden');
     startBtn.classList.add('hidden');
   }
 
   function showLobbyUI() {
     lobbyTitle.classList.remove('hidden');
-    roomCodeBox.classList.add('hidden');
-    playerCountEl.classList.add('hidden');
+    nameForm.classList.add('hidden');
     rejoinBtn.classList.add('hidden');
+    editingName = false;
+    nameJoinBtn.textContent = 'JOIN';
 
     playerIdentity.style.setProperty('--player-color', playerColor);
     playerIdentityName.textContent = playerName || ('Player ' + playerId);
@@ -803,7 +832,9 @@
   // controller picks up the current room state.
   document.addEventListener('visibilitychange', function () {
     if (document.visibilityState !== 'visible') return;
-    if (currentScreen === 'name' || currentScreen === 'gameover' || gameCancelled) return;
+    if (currentScreen === 'gameover' || gameCancelled) return;
+    // Don't reconnect if on waiting screen with no active connection (pre-join)
+    if (currentScreen === 'waiting' && !playerId) return;
     // Tear down the (possibly stale) connection and reconnect immediately.
     reconnectAttempts = 0;
     clearTimeout(reconnectTimer);
@@ -817,16 +848,22 @@
     connect();
   });
 
-  // If we have a reconnect token or rejoin ID, skip name entry and connect immediately
+  // Always start on the waiting screen
   var hasToken = sessionStorage.getItem('reconnectToken_' + roomCode);
   if (hasToken || rejoinId) {
+    // Reconnect — hide name form, show connecting status
     playerName = savedName || null;
-    showScreen('waiting');
+    nameForm.classList.add('hidden');
     statusText.textContent = 'Connecting...';
     statusDetail.textContent = '';
+    showScreen('waiting');
     connect();
   } else {
-    showScreen('name');
+    // Fresh join — show name form
+    nameInput.value = savedName;
+    statusText.textContent = '';
+    statusDetail.textContent = '';
+    showScreen('waiting');
     nameInput.focus();
   }
 })();

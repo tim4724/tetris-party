@@ -717,7 +717,11 @@ function onGameResumed() {
   if (currentScreen === 'game') {
     gameToolbar.classList.remove('hidden');
   }
-  if (music) {
+  // If paused mid-countdown, the overlay still has content — show it again
+  if (countdownOverlay.textContent) {
+    countdownOverlay.classList.remove('hidden');
+  } else if (music) {
+    // Only restart music when resuming actual gameplay, not mid-countdown
     music.start();
     if (muted) music.masterGain.gain.setValueAtTime(0, music.ctx.currentTime);
   }

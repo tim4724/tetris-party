@@ -44,29 +44,6 @@ html, body {
   display: none !important;
 }
 
-/* Name entry screen */
-#name-screen {
-  gap: 0;
-  justify-content: center;
-  background:
-    radial-gradient(ellipse at 50% 30%, rgba(0, 100, 255, 0.06) 0%, transparent 60%),
-    radial-gradient(ellipse at 50% 80%, rgba(0, 255, 136, 0.04) 0%, transparent 50%);
-}
-
-#name-title {
-  font-family: 'Orbitron', sans-serif;
-  font-size: clamp(1.4rem, 7vw, 2.2rem);
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan), var(--accent-green));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  filter: drop-shadow(0 0 8px rgba(0, 200, 255, 0.15));
-  margin-bottom: 40px;
-  animation: lobbyFadeDown 0.5s ease-out both;
-}
-
 #name-form {
   display: flex;
   flex-direction: column;
@@ -178,38 +155,6 @@ html, body {
   animation: lobbyFadeDown 0.5s ease-out both;
 }
 
-#room-code-box {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  animation: lobbyFadeUp 0.5s 0.15s ease-out both;
-}
-
-#room-code-label {
-  font-family: system-ui, -apple-system, sans-serif;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.25em;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-}
-
-#room-code-value {
-  font-family: 'Orbitron', sans-serif;
-  font-size: clamp(1.6rem, 9vw, 2.6rem);
-  font-weight: 700;
-  letter-spacing: 0.25em;
-  color: #fff;
-}
-
-#player-count {
-  font-size: 14px;
-  color: var(--text-secondary);
-  letter-spacing: 0.04em;
-  animation: lobbyFadeIn 0.4s 0.3s ease-out both;
-}
-
 #player-identity {
   display: flex;
   flex-direction: column;
@@ -232,10 +177,10 @@ html, body {
   font-weight: 600;
   letter-spacing: 0.05em;
   color: var(--player-color, var(--text-primary));
+  cursor: pointer;
 }
 
 #start-btn {
-  margin-top: 32px;
   padding: 1rem 3rem;
   border: none;
   border-radius: var(--radius-md);

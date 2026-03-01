@@ -15,23 +15,13 @@
 <body>
   <canvas id="bg-canvas"></canvas>
 
-  <!-- Name entry screen -->
-  <div id="name-screen" class="screen hidden">
-    <h1 id="name-title">TETRIS PARTY</h1>
+  <!-- Lobby / waiting screen -->
+  <div id="waiting-screen" class="screen hidden">
+    <h1 id="lobby-title">TETRIS PARTY</h1>
     <div id="name-form">
       <input id="name-input" type="text" maxlength="16" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false" placeholder="Enter name...">
       <button id="name-join-btn">JOIN</button>
     </div>
-  </div>
-
-  <!-- Connecting/waiting screen -->
-  <div id="waiting-screen" class="screen hidden">
-    <h1 id="lobby-title" class="hidden">TETRIS PARTY</h1>
-    <div id="room-code-box" class="hidden">
-      <span id="room-code-label">ROOM</span>
-      <span id="room-code-value"></span>
-    </div>
-    <p id="player-count" class="hidden"></p>
     <div id="player-identity" class="hidden">
       <div id="player-identity-card">
         <span id="player-identity-name"></span>
