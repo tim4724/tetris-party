@@ -5,7 +5,6 @@ const QRCode = require('qrcode');
 const Game = require('./Game.js');
 const {
   MAX_PLAYERS,
-  RECONNECT_GRACE_MS,
   COUNTDOWN_SECONDS
 } = require('./constants.js');
 const { PLAYER_COLORS } = require('../public/shared/colors.js');
@@ -91,25 +90,6 @@ class Room {
     return { playerId, name: playerName, color, reconnectToken, isHost };
   }
 
-  changeName(playerId, newName) {
-    const player = this.players.get(playerId);
-    if (!player) return;
-
-    const clean = typeof newName === 'string' ? newName.trim().slice(0, 16) : '';
-    if (!clean) return;
-
-    player.name = clean;
-    send(player.ws, MSG.NAME_CHANGED, { name: clean });
-
-    // Notify display so the player card updates
-    this.sendToDisplay(MSG.PLAYER_JOINED, {
-      playerId,
-      playerName: clean,
-      playerColor: player.color,
-      playerCount: this.players.size
-    });
-  }
-
   removePlayer(playerId) {
     const player = this.players.get(playerId);
     if (!player) return;
@@ -146,7 +126,7 @@ class Room {
 
   _sendDisconnectQR(playerId) {
     if (this.joinUrl) {
-      const rejoinUrl = `${this.joinUrl}?rejoin=${playerId}`;
+      const rejoinUrl = `${this.joinUrl}?player=${playerId}`;
       this.getQRUrl(rejoinUrl).then((qrDataUrl) => {
         this.sendToDisplay(MSG.PLAYER_DISCONNECTED, { playerId, qrDataUrl });
       });

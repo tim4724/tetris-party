@@ -75,9 +75,6 @@
     muteBtn.querySelector('.sound-waves').style.display = muted ? 'none' : '';
   });
 
-  // Edit mode state
-  let editingName = false;
-
   // Screen management
   function showScreen(name) {
     currentScreen = name;
@@ -97,11 +94,10 @@
 
   // Extract room code and optional rejoin ID from URL
   roomCode = location.pathname.split('/').filter(Boolean)[0] || null;
-  const rejoinId = new URLSearchParams(location.search).get('rejoin');
+  let rejoinId = new URLSearchParams(location.search).get('rejoin')
+    || new URLSearchParams(location.search).get('player');
   if (!roomCode) {
-    showScreen('waiting');
-    statusText.textContent = 'No Room Code';
-    statusDetail.textContent = 'Scan a QR code or use a join link';
+    showErrorState('No Room Code', 'Scan a QR code or use a join link');
     return;
   }
 
@@ -112,14 +108,6 @@
     var name = nameInput.value.trim();
     if (!name) return;
 
-    if (editingName && ws && ws.readyState === WebSocket.OPEN) {
-      // Already connected — send name change, exit edit mode
-      send(MSG.CHANGE_NAME, { name: name });
-      exitEditMode();
-      return;
-    }
-
-    // Not connected yet — join flow
     playerName = name;
     localStorage.setItem('tetris_player_name', name);
     nameForm.classList.add('hidden');
@@ -128,31 +116,9 @@
     connect();
   }
 
-  function enterEditMode() {
-    editingName = true;
-    nameInput.value = playerName || '';
-    nameJoinBtn.textContent = 'SAVE';
-    nameForm.classList.remove('hidden');
-    playerIdentity.classList.add('hidden');
-    nameInput.focus();
-  }
-
-  function exitEditMode() {
-    editingName = false;
-    nameJoinBtn.textContent = 'JOIN';
-    nameForm.classList.add('hidden');
-    playerIdentity.classList.remove('hidden');
-  }
-
   nameJoinBtn.addEventListener('click', submitName);
   nameInput.addEventListener('keydown', function (e) {
     if (e.key === 'Enter') submitName();
-  });
-
-  // Tap player card to edit name
-  document.getElementById('player-identity-card').addEventListener('click', function () {
-    if (currentScreen !== 'waiting') return;
-    enterEditMode();
   });
 
   function vibrate(pattern) {
@@ -324,17 +290,12 @@
 
   function attemptReconnect() {
     if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-      statusText.textContent = 'Disconnected';
-      statusDetail.textContent = 'Could not reconnect.';
-      rejoinBtn.classList.remove('hidden');
-      showScreen('waiting');
+      showErrorState('Disconnected', 'Could not reconnect.', { showRejoin: true });
       return;
     }
 
     reconnectAttempts++;
-    statusText.textContent = 'Reconnecting...';
-    statusDetail.textContent = 'Attempt ' + reconnectAttempts + ' of ' + MAX_RECONNECT_ATTEMPTS;
-    showScreen('waiting');
+    showErrorState('Reconnecting...', 'Attempt ' + reconnectAttempts + ' of ' + MAX_RECONNECT_ATTEMPTS);
 
     clearTimeout(reconnectTimer);
     reconnectTimer = setTimeout(connect, RECONNECT_INTERVAL);
@@ -345,12 +306,6 @@
     switch (data.type) {
       case MSG.JOINED:
         onJoined(data);
-        break;
-      case MSG.NAME_CHANGED:
-        playerName = data.name;
-        playerIdentityName.textContent = data.name;
-        playerNameEl.textContent = data.name;
-        localStorage.setItem('tetris_player_name', data.name);
         break;
       case MSG.LOBBY_UPDATE:
         onLobbyUpdate(data);
@@ -395,10 +350,7 @@
         break;
       case MSG.ROOM_RESET:
         gameCancelled = true;
-        hideLobbyElements();
-        statusText.textContent = 'Game Over';
-        statusDetail.textContent = '';
-        showScreen('waiting');
+        showErrorState('Game Over', '');
         break;
       case MSG.INPUT_ACK:
         // Could track unacked inputs here for prediction rollback
@@ -420,6 +372,13 @@
       sessionStorage.setItem('reconnectToken_' + roomCode, data.reconnectToken);
     }
     sessionStorage.setItem('playerId_' + roomCode, data.playerId);
+
+    // Persist player ID in URL so refreshes/reconnects can rejoin by ID
+    rejoinId = String(data.playerId);
+    var params = new URLSearchParams(location.search);
+    params.delete('rejoin');
+    params.set('player', data.playerId);
+    history.replaceState(null, '', location.pathname + '?' + params.toString());
 
     // Use server-confirmed name, falling back to local name or generic
     if (data.playerName) playerName = data.playerName;
@@ -464,12 +423,23 @@
     startBtn.classList.add('hidden');
   }
 
+  function showErrorState(heading, detail, options) {
+    hideLobbyElements();
+    lobbyTitle.classList.remove('hidden');
+    statusText.textContent = heading;
+    statusDetail.textContent = detail || '';
+    if (options && options.showRejoin) {
+      rejoinBtn.classList.remove('hidden');
+    } else {
+      rejoinBtn.classList.add('hidden');
+    }
+    showScreen('waiting');
+  }
+
   function showLobbyUI() {
     lobbyTitle.classList.remove('hidden');
     nameForm.classList.add('hidden');
     rejoinBtn.classList.add('hidden');
-    editingName = false;
-    nameJoinBtn.textContent = 'JOIN';
 
     playerIdentity.style.setProperty('--player-color', playerColor);
     playerIdentityName.textContent = playerName || ('Player ' + playerId);
@@ -595,20 +565,12 @@
   function onError(data) {
     if (data.code === 'HOST_DISCONNECTED') {
       gameCancelled = true;
-      hideLobbyElements();
-      statusText.textContent = 'Game Cancelled';
-      statusDetail.textContent = 'Host disconnected.';
-      rejoinBtn.classList.remove('hidden');
-      showScreen('waiting');
+      showErrorState('Game Cancelled', 'Host disconnected.', { showRejoin: true });
       return;
     }
-    hideLobbyElements();
-    statusText.textContent = 'Error';
-    statusDetail.textContent = data.message || 'Unknown error';
-    if (data.message === 'Reconnection failed') {
-      rejoinBtn.classList.remove('hidden');
-    }
-    showScreen('waiting');
+    showErrorState('Error', data.message || 'Unknown error', {
+      showRejoin: data.message === 'Reconnection failed'
+    });
   }
 
   // Pause

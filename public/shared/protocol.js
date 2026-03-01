@@ -8,11 +8,9 @@ const MSG = {
   INPUT: 'input',
   SOFT_DROP_START: 'soft_drop_start',
   SOFT_DROP_END: 'soft_drop_end',
-  CHANGE_NAME: 'changeName',
 
   // Server → Controller
   JOINED: 'joined',
-  NAME_CHANGED: 'nameChanged',
   INPUT_ACK: 'input_ack',
   LOBBY_UPDATE: 'lobby_update',
   GAME_START: 'game_start',

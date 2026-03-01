@@ -177,7 +177,6 @@ html, body {
   font-weight: 600;
   letter-spacing: 0.05em;
   color: var(--player-color, var(--text-primary));
-  cursor: pointer;
 }
 
 #start-btn {
@@ -209,16 +208,20 @@ html, body {
 }
 
 #status-text {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  animation: lobbyFadeIn 0.4s 0.3s ease-out both;
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(1.1rem, 5.5vw, 1.6rem);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: rgba(0, 200, 255, 0.9);
+  animation: lobbyFadeUp 0.5s 0.15s ease-out both;
 }
 
 #status-detail {
-  font-size: 13px;
-  color: #445;
-  margin-top: 4px;
+  font-size: clamp(0.85rem, 3.5vw, 1rem);
+  color: rgba(160, 160, 200, 0.7);
+  margin-top: 8px;
+  letter-spacing: 0.02em;
+  animation: lobbyFadeUp 0.5s 0.25s ease-out both;
 }
 
 #rejoin-btn {
@@ -234,6 +237,7 @@ html, body {
   cursor: pointer;
   margin-top: 16px;
   transition: all var(--transition-fast);
+  animation: lobbyFadeUp 0.5s 0.35s ease-out both;
 }
 
 #rejoin-btn:active {

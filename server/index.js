@@ -99,7 +99,25 @@ const clientInfo = new WeakMap(); // ws -> { roomCode, playerId, type }
 // --- WebSocket Server ---
 const wss = new WebSocketServer({ server });
 
+// --- Heartbeat: detect stale connections within ~10s ---
+const HEARTBEAT_INTERVAL_MS = 10000;
+
+const heartbeat = setInterval(() => {
+  for (const ws of wss.clients) {
+    if (ws.isAlive === false) {
+      ws.terminate();
+      continue;
+    }
+    ws.isAlive = false;
+    ws.ping();
+  }
+}, HEARTBEAT_INTERVAL_MS);
+
+wss.on('close', () => clearInterval(heartbeat));
+
 wss.on('connection', (ws) => {
+  ws.isAlive = true;
+  ws.on('pong', () => { ws.isAlive = true; });
   ws.on('message', (raw) => {
     let msg;
     try {
@@ -181,7 +199,7 @@ async function handleNewConnection(ws, msg) {
       return;
     }
 
-    // QR-based rejoin: player scanned a rejoin QR code with ?rejoin=playerId
+    // Rejoin: player has ?player=playerId (from QR code or URL persistence)
     if (msg.rejoinId) {
       const result = room.rejoinById(parseInt(msg.rejoinId), ws);
       if (result) {
@@ -300,9 +318,6 @@ function handleControllerMessage(room, playerId, msg) {
       if (playerId === room.hostId) {
         room.resumeGame();
       }
-      break;
-    case MSG.CHANGE_NAME:
-      room.changeName(playerId, msg.name);
       break;
   }
 }
