@@ -25,6 +25,7 @@ class Room {
     this.paused = false;
     this._goTimeout = null;
     this._displayGraceTimer = null;
+    this._lastResults = null;
 
     activeRoomCodes.add(roomCode);
   }
@@ -118,6 +119,20 @@ class Room {
         if (!current || current.connected) return; // reconnected during grace
         this._removeLobbyPlayer(playerId);
       }, 5000);
+    } else if (this.state === ROOM_STATE.RESULTS) {
+      // Results screen is transient — just return to lobby immediately
+      player.connected = false;
+      player.ws = null;
+      const wasHost = playerId === this.hostId;
+      if (this.game) { this.game.stop(); this.game = null; }
+      this._lastResults = null;
+      this.state = ROOM_STATE.LOBBY;
+      this._removeLobbyPlayer(playerId);
+      // For non-host, _removeLobbyPlayer only sends PLAYER_LEFT — also tell
+      // display and remaining controllers to leave the results screen.
+      if (!wasHost) {
+        this.broadcast(MSG.RETURN_TO_LOBBY, { playerCount: this.players.size });
+      }
     } else {
       // In game: mark disconnected, show QR on display for rejoin
       player.connected = false;
@@ -157,36 +172,19 @@ class Room {
 
     if (this.joinUrl) {
       const rejoinUrl = `${this.joinUrl}?player=${playerId}`;
-      this.getQRUrl(rejoinUrl).then((qrDataUrl) => {
-        const p = this.players.get(playerId);
-        if (p && (p.connected || p._qrGeneration !== generation)) return;
-        this.sendToDisplay(MSG.PLAYER_DISCONNECTED, { playerId, qrDataUrl });
-      });
+      const qrMatrix = this.getQRMatrix(rejoinUrl);
+      const p = this.players.get(playerId);
+      if (p && (p.connected || p._qrGeneration !== generation)) return;
+      this.sendToDisplay(MSG.PLAYER_DISCONNECTED, { playerId, qrMatrix });
     } else {
-      this.sendToDisplay(MSG.PLAYER_DISCONNECTED, { playerId, qrDataUrl: null });
+      this.sendToDisplay(MSG.PLAYER_DISCONNECTED, { playerId, qrMatrix: null });
     }
-  }
-
-  reconnectPlayer(playerId, ws, token) {
-    const player = this.players.get(playerId);
-    if (!player) return false;
-    if (player.reconnectToken !== token) return false;
-
-    player.ws = ws;
-    player.connected = true;
-
-    if (player.graceTimer) {
-      clearTimeout(player.graceTimer);
-      player.graceTimer = null;
-    }
-
-    this.sendToDisplay(MSG.PLAYER_RECONNECTED, { playerId });
-    return true;
   }
 
   reconnectByToken(ws, token) {
     for (const [id, player] of this.players) {
       if (player.reconnectToken === token) {
+        const wasDisconnected = !player.connected;
         // Close old socket to prevent duplicate connections
         if (player.connected && player.ws && player.ws.readyState === 1) {
           try { player.ws.close(); } catch (e) { /* ignore */ }
@@ -197,7 +195,10 @@ class Room {
           clearTimeout(player.graceTimer);
           player.graceTimer = null;
         }
-        this.sendToDisplay(MSG.PLAYER_RECONNECTED, { playerId: id });
+        // Only notify display if it saw a disconnect
+        if (wasDisconnected) {
+          this.sendToDisplay(MSG.PLAYER_RECONNECTED, { playerId: id });
+        }
         return id;
       }
     }
@@ -206,7 +207,12 @@ class Room {
 
   rejoinById(playerId, ws) {
     const player = this.players.get(playerId);
-    if (!player || player.connected) return null;
+    if (!player) return null;
+
+    // Reject if genuinely connected; allow if WS is stale (race with close event)
+    if (player.connected) {
+      if (player.ws && player.ws.readyState === 1) return null;
+    }
 
     player.ws = ws;
     player.connected = true;
@@ -234,7 +240,15 @@ class Room {
       const qr = QRCode.create(text, { errorCorrectionLevel: 'M' });
       const size = qr.modules.size;
       const modules = Array.from(qr.modules.data);
-      return { size, modules };
+      const quiet = 2;
+      const padded = size + quiet * 2;
+      const paddedModules = new Array(padded * padded).fill(0);
+      for (let row = 0; row < size; row++) {
+        for (let col = 0; col < size; col++) {
+          paddedModules[(row + quiet) * padded + (col + quiet)] = modules[row * size + col];
+        }
+      }
+      return { size: padded, modules: paddedModules };
     } catch (err) {
       console.error('QR matrix generation failed:', err);
       return null;
@@ -243,7 +257,7 @@ class Room {
 
   async getQRUrl(joinUrl) {
     try {
-      return await QRCode.toDataURL(joinUrl, { width: 256, margin: 1 });
+      return await QRCode.toDataURL(joinUrl, { width: 256, margin: 3 });
     } catch (err) {
       console.error('QR generation failed:', err);
       return null;
@@ -272,6 +286,7 @@ class Room {
       this.game = null;
     }
     this.paused = false;
+    this._lastResults = null;
 
     this.state = ROOM_STATE.COUNTDOWN;
 
@@ -460,6 +475,7 @@ class Room {
         if (player) r.playerName = player.name;
       }
     }
+    this._lastResults = results;
     this.broadcast(MSG.GAME_END, results);
   }
 
@@ -499,6 +515,7 @@ class Room {
       this.players.delete(id);
     }
     this.paused = false;
+    this._lastResults = null;
     this.state = ROOM_STATE.LOBBY;
 
     for (const id of disconnectedIds) {
@@ -537,6 +554,9 @@ class Room {
 
     if (this.state === ROOM_STATE.PLAYING || this.state === ROOM_STATE.COUNTDOWN) {
       this.sendToDisplay(MSG.GAME_START, {});
+      if (this.state === ROOM_STATE.COUNTDOWN && this._countdownRemaining > 0) {
+        this.sendToDisplay(MSG.COUNTDOWN, { value: this._countdownRemaining });
+      }
       if (this.paused) {
         this.sendToDisplay(MSG.GAME_PAUSED, {});
       }
@@ -545,6 +565,8 @@ class Room {
           this._sendDisconnectQR(id);
         }
       }
+    } else if (this.state === ROOM_STATE.RESULTS && this._lastResults) {
+      this.sendToDisplay(MSG.GAME_END, this._lastResults);
     }
   }
 
@@ -567,6 +589,7 @@ class Room {
       this.game.stop();
       this.game = null;
     }
+    this._lastResults = null;
     for (const [, player] of this.players) {
       if (player.graceTimer) {
         clearTimeout(player.graceTimer);

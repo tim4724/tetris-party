@@ -14,7 +14,7 @@ let canvas = null;
 let ctx = null;
 let lastFrameTime = null;
 let playerIndexCounter = 0;
-let disconnectedQRs = new Map(); // playerId -> Image
+let disconnectedQRs = new Map(); // playerId -> Canvas
 let garbageIndicatorEffects = new Map(); // playerId -> transient attacker-colored meter block overlays
 let lastRoomCode = null; // remember room code for reconnect
 let welcomeBg = null;
@@ -480,10 +480,10 @@ function onGameEnd(msg) {
 }
 
 function onPlayerDisconnected(msg) {
-  if (msg.qrDataUrl) {
-    const img = new Image();
-    img.src = msg.qrDataUrl;
-    disconnectedQRs.set(msg.playerId, img);
+  if (msg.qrMatrix) {
+    const offscreen = document.createElement('canvas');
+    renderTetrisQR(offscreen, msg.qrMatrix);
+    disconnectedQRs.set(msg.playerId, offscreen);
   } else {
     disconnectedQRs.set(msg.playerId, null);
   }
@@ -848,7 +848,7 @@ function renderLoop(timestamp) {
         ctx.stroke();
 
         // Draw QR image clipped to rounded rect
-        if (qrImg && qrImg.complete && qrImg.naturalWidth > 0) {
+        if (qrImg && qrImg.width > 0) {
           ctx.save();
           ctx.beginPath();
           ctx.roundRect(outerX + pad, outerY + pad, qrSize, qrSize, Math.max(1, radius - pad));

@@ -18,6 +18,7 @@
   let playerCount = 0;
   let gameCancelled = false;
   let lastLines = 0;
+  let lastGameResults = null;
 
   // Falling tetromino background
   const bgCanvas = document.getElementById('bg-canvas');
@@ -281,7 +282,7 @@
 
     ws.onclose = function () {
       stopHeartbeat();
-      if (currentScreen === 'gameover' || gameCancelled) return;
+      if (gameCancelled) return;
       attemptReconnect();
     };
 
@@ -431,6 +432,13 @@
       return;
     }
 
+    // Reconnected into results — re-show gameover screen
+    if (data.reconnected && data.roomState === 'results' && lastGameResults) {
+      renderGameResults(lastGameResults);
+      showScreen('gameover');
+      return;
+    }
+
     showLobbyUI();
   }
 
@@ -528,6 +536,7 @@
   }
 
   function onGameEnd(data) {
+    lastGameResults = data.results;
     renderGameResults(data.results);
     showScreen('gameover');
   }
@@ -599,6 +608,11 @@
     if (data.code === 'HOST_DISCONNECTED') {
       gameCancelled = true;
       showErrorState('Game Cancelled', 'Host disconnected.', { showRejoin: true });
+      return;
+    }
+    if (data.message === 'Room not found') {
+      gameCancelled = true;
+      showErrorState('Game Over', 'Room not found.');
       return;
     }
     showErrorState('Error', data.message || 'Unknown error', {
@@ -874,7 +888,7 @@
   // controller picks up the current room state.
   document.addEventListener('visibilitychange', function () {
     if (document.visibilityState !== 'visible') return;
-    if (currentScreen === 'gameover' || gameCancelled) return;
+    if (gameCancelled) return;
     // Don't reconnect if on waiting screen with no active connection (pre-join)
     if (currentScreen === 'waiting' && !playerId) return;
     // Tear down the (possibly stale) connection and reconnect immediately.
