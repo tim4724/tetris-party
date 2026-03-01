@@ -1,0 +1,57 @@
+/* ==========================================================
+   Design Tokens — CSS custom properties (mirrors theme.js)
+   ========================================================== */
+
+:root {
+  /* Backgrounds */
+  --bg-primary: #06060f;
+  --bg-secondary: #0c0c1a;
+  --bg-card: #12122a;
+  --bg-board: #080810;
+
+  /* Text */
+  --text-primary: #e0e0ff;
+  --text-secondary: #6a6a88;
+
+  /* Accents */
+  --accent-blue: #4444ff;
+  --accent-cyan: #00ccff;
+  --accent-green: #00ff88;
+  --accent-green-dark: #00dd77;
+
+  /* Semantic */
+  --danger: #ff4444;
+  --garbage: #3a3a4e;
+  --border: #1e1e44;
+
+  /* Medals */
+  --medal-gold: #ffd700;
+  --medal-silver: #c0c0c0;
+  --medal-bronze: #cd7f32;
+
+  /* Glows */
+  --glow-cyan: rgba(0, 200, 255, 0.15);
+  --glow-green: rgba(0, 255, 136, 0.3);
+
+  /* Opacities */
+  --opacity-faint: 0.04;
+  --opacity-tint: 0.06;
+  --opacity-subtle: 0.08;
+  --opacity-muted: 0.10;
+  --opacity-soft: 0.15;
+  --opacity-label: 0.5;
+  --opacity-overlay: 0.75;
+
+  /* Transitions */
+  --transition-fast: 0.2s ease;
+  --transition-normal: 0.3s ease;
+
+  /* Animations */
+  --anim-fade: 0.5s ease-out both;
+  --anim-pulse: 2.5s ease-in-out infinite;
+
+  /* Radii */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+}

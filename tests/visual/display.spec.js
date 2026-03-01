@@ -89,6 +89,12 @@ test.describe('Display', () => {
   test('welcome screen', async ({ page }) => {
     await page.goto('/');
     await waitForFont(page);
+    // Stop animation and hide canvas for deterministic snapshot
+    await page.evaluate(() => {
+      if (typeof welcomeBg !== 'undefined' && welcomeBg) welcomeBg.stop();
+      const c = document.getElementById('welcome-canvas');
+      if (c) c.style.display = 'none';
+    });
     await expect(page).toHaveScreenshot('display-welcome.png');
   });
 

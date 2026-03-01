@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/shared/theme.css">
   <link rel="stylesheet" href="/display/display.css">
 </head>
 <body>
@@ -20,7 +21,9 @@
 
   <!-- Welcome screen: unlocks audio via user gesture -->
   <div id="welcome-screen" class="screen">
+    <canvas id="welcome-canvas"></canvas>
     <h1>TETRIS PARTY</h1>
+    <p class="welcome-subtitle">SHARED DISPLAY</p>
     <button id="new-game-btn">START NEW GAME</button>
   </div>
 
@@ -68,10 +71,12 @@
   </div>
 
   <script src="/shared/protocol.js"></script>
+  <script src="/shared/theme.js"></script>
   <script src="/shared/colors.js"></script>
   <script src="/display/BoardRenderer.js"></script>
   <script src="/display/UIRenderer.js"></script>
   <script src="/display/Animations.js"></script>
+  <script src="/display/WelcomeBackground.js"></script>
   <script src="/display/Music.js"></script>
   <script src="/display/display.js"></script>
 </body>

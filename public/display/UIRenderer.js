@@ -36,9 +36,9 @@ class UIRenderer {
     this.boardHeight = boardHeightPx;
     this.playerIndex = playerIndex;
     this.accentColor = PLAYER_COLORS[playerIndex] || PLAYER_COLORS[0];
-    this.panelWidth = cellSize * 4.5;
-    this.miniSize = cellSize * 0.6;
-    this.panelGap = Math.max(6, cellSize * 0.25);
+    this.panelWidth = cellSize * THEME.size.panelWidth;
+    this.miniSize = cellSize * THEME.font.cellScale.mini;
+    this.panelGap = Math.max(THEME.size.panelGapMin, cellSize * THEME.size.panelGap);
     this._fontLoaded = document.fonts?.check?.('12px Orbitron') ?? false;
     this._labelFont = this._fontLoaded ? 'Orbitron' : '"Courier New", monospace';
   }
@@ -82,10 +82,10 @@ class UIRenderer {
     const ctx = this.ctx;
     const name = playerState.playerName || PLAYER_NAMES[this.playerIndex] || ('Player ' + (this.playerIndex + 1));
     const nameY = this.boardY - 8;
-    const fontSize = Math.max(12, this.cellSize * 0.55);
+    const fontSize = Math.max(12, this.cellSize * THEME.font.cellScale.name);
 
     // Name text
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = THEME.color.text.white;
     ctx.font = `700 ${fontSize}px ${this._labelFont}`;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'bottom';
@@ -93,7 +93,7 @@ class UIRenderer {
 
     // Level badge on right side
     if (playerState.level) {
-      const lvlSize = Math.max(9, this.cellSize * 0.38);
+      const lvlSize = Math.max(9, this.cellSize * THEME.font.cellScale.label);
       ctx.font = `700 ${lvlSize}px ${this._labelFont}`;
       ctx.textAlign = 'right';
       ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
@@ -104,13 +104,13 @@ class UIRenderer {
   drawHoldPanel(playerState) {
     const ctx = this.ctx;
     const panelY = this.boardY;
-    const labelSize = Math.max(9, this.cellSize * 0.38);
-    const boxSize = this.miniSize * 4.5;
+    const labelSize = Math.max(9, this.cellSize * THEME.font.cellScale.label);
+    const boxSize = this.miniSize * THEME.size.panelWidth;
     // Right-align the box to sit next to the board (mirroring next panel)
     const panelX = this.boardX - this.panelGap - boxSize;
 
     // Label
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.fillStyle = `rgba(255, 255, 255, ${THEME.opacity.label})`;
     ctx.font = `700 ${labelSize}px ${this._labelFont}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
@@ -137,13 +137,13 @@ class UIRenderer {
     const ctx = this.ctx;
     const panelX = this.boardX + this.boardWidth + this.panelGap;
     const panelY = this.boardY;
-    const labelSize = Math.max(9, this.cellSize * 0.38);
-    const boxWidth = this.miniSize * 4.5;
+    const labelSize = Math.max(9, this.cellSize * THEME.font.cellScale.label);
+    const boxWidth = this.miniSize * THEME.size.panelWidth;
     const pieceSpacing = this.miniSize * 3;
     const startY = panelY + labelSize + 6;
 
     // Label
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.fillStyle = `rgba(255, 255, 255, ${THEME.opacity.label})`;
     ctx.font = `700 ${labelSize}px ${this._labelFont}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
@@ -178,7 +178,7 @@ class UIRenderer {
   drawScorePanel(playerState) {
     const ctx = this.ctx;
     const panelY = this.boardY + this.boardHeight + 10;
-    const scoreSize = Math.max(14, this.cellSize * 0.7);
+    const scoreSize = Math.max(14, this.cellSize * THEME.font.cellScale.score);
 
     // Score — large prominent number
     ctx.font = `700 ${scoreSize}px ${this._labelFont}`;
@@ -192,7 +192,7 @@ class UIRenderer {
       ctx.shadowColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.3)`;
       ctx.shadowBlur = 8;
     }
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = THEME.color.text.white;
     ctx.fillText(
       scoreStr,
       this.boardX + this.boardWidth / 2,
@@ -202,7 +202,7 @@ class UIRenderer {
     ctx.shadowBlur = 0;
 
     // Lines count
-    const smallSize = Math.max(9, this.cellSize * 0.38);
+    const smallSize = Math.max(9, this.cellSize * THEME.font.cellScale.label);
     ctx.font = `500 ${smallSize}px ${this._labelFont}`;
     ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
     const statsY = panelY + scoreSize + Math.max(10, this.cellSize * 0.4);
@@ -226,16 +226,16 @@ class UIRenderer {
     const ctx = this.ctx;
     const meter = this.getGarbageMeterLayout();
     const rows = Math.min(pendingGarbage, meter.rows);
-    const inset = 1;
-    const r = Math.min(3, meter.cellSize * 0.12);
+    const inset = THEME.size.boardInset;
+    const r = THEME.radius.block(meter.cellSize);
 
     // Draw stacked gray blocks from bottom up (may overlap hold panel)
     for (let i = 0; i < rows; i++) {
       const y = meter.y + this.boardHeight - (i + 1) * meter.cellSize;
-      ctx.fillStyle = '#3a3a4e';
+      ctx.fillStyle = THEME.color.garbage;
       this._roundRect(meter.x + inset, y + inset, meter.cellSize - inset * 2, meter.cellSize - inset * 2, r);
       ctx.fill();
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
+      ctx.fillStyle = `rgba(255, 255, 255, ${THEME.opacity.faint})`;
       ctx.fillRect(meter.x + inset + 1, y + inset + 1, meter.cellSize - inset * 2 - 2, 1);
     }
   }
@@ -246,8 +246,8 @@ class UIRenderer {
     const ctx = this.ctx;
     const meter = this.getGarbageMeterLayout();
     const now = performance.now();
-    const inset = 1;
-    const r = Math.min(3, meter.cellSize * 0.12);
+    const inset = THEME.size.boardInset;
+    const r = THEME.radius.block(meter.cellSize);
 
     for (const effect of effects) {
       const alpha = this._getGarbageIndicatorAlpha(effect, now);
@@ -281,8 +281,8 @@ class UIRenderer {
       this.boardY + this.boardHeight / 2,
       this.boardWidth * 0.7
     );
-    grad.addColorStop(0, 'rgba(0, 0, 0, 0.5)');
-    grad.addColorStop(1, 'rgba(0, 0, 0, 0.75)');
+    grad.addColorStop(0, `rgba(0, 0, 0, ${THEME.opacity.label})`);
+    grad.addColorStop(1, `rgba(0, 0, 0, ${THEME.opacity.overlay})`);
     ctx.fillStyle = grad;
     ctx.fillRect(this.boardX, this.boardY, this.boardWidth, this.boardHeight);
 
@@ -293,9 +293,9 @@ class UIRenderer {
     ctx.textBaseline = 'middle';
 
     // Red glow
-    ctx.shadowColor = 'rgba(255, 50, 50, 0.6)';
+    ctx.shadowColor = THEME.color.ko.glow;
     ctx.shadowBlur = 20;
-    ctx.fillStyle = '#ff4444';
+    ctx.fillStyle = THEME.color.ko.text;
     ctx.fillText(
       'K.O.',
       this.boardX + this.boardWidth / 2,
@@ -305,7 +305,7 @@ class UIRenderer {
     ctx.shadowBlur = 0;
 
     // Scanlines over the darkened board
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
+    ctx.fillStyle = `rgba(0, 0, 0, ${THEME.opacity.subtle})`;
     for (let y = this.boardY; y < this.boardY + this.boardHeight; y += 3) {
       ctx.fillRect(this.boardX, y, this.boardWidth, 1);
     }
@@ -328,7 +328,7 @@ class UIRenderer {
       const dx = offsetX + (bx - bounds.minX) * size;
       const dy = offsetY + (by - bounds.minY) * size;
       const inset = 0.5;
-      const r = Math.min(2, size * 0.1);
+      const r = THEME.radius.mini(size);
 
       // Mini block with gradient
       const grad = ctx.createLinearGradient(dx, dy, dx, dy + size);
@@ -346,26 +346,26 @@ class UIRenderer {
 
   _drawPanel(x, y, w, h) {
     const ctx = this.ctx;
-    const r = Math.min(6, this.cellSize * 0.2);
+    const r = THEME.radius.panel(this.cellSize);
     const rgb = this._hexToRgb(this.accentColor);
 
     // Dark background matching board
-    ctx.fillStyle = '#080810';
+    ctx.fillStyle = THEME.color.bg.board;
     this._roundRect(x, y, w, h, r);
     ctx.fill();
 
-    // Player color tint at 6% (matches board)
+    // Player color tint (matches board)
     if (rgb) {
-      ctx.fillStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.06)`;
+      ctx.fillStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${THEME.opacity.tint})`;
       this._roundRect(x, y, w, h, r);
       ctx.fill();
     }
 
-    // Subtle player-color border (matches board: 15% color mix)
+    // Subtle player-color border (matches board)
     ctx.strokeStyle = rgb
-      ? `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.15)`
-      : 'rgba(255, 255, 255, 0.06)';
-    ctx.lineWidth = 1;
+      ? `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${THEME.opacity.soft})`
+      : `rgba(255, 255, 255, ${THEME.opacity.tint})`;
+    ctx.lineWidth = THEME.stroke.border;
     this._roundRect(x, y, w, h, r);
     ctx.stroke();
   }

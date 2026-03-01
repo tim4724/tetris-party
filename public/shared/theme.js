@@ -1,0 +1,141 @@
+'use strict';
+
+// ============================================================
+// Design Tokens — single source of truth for the visual layer
+// ============================================================
+
+// --- Tetromino colors (index matches PIECE_TYPE_TO_ID: 1=I … 7=Z) ---
+const PIECE_COLORS = {
+  0: '#000000',    // empty
+  1: '#00F0F0',    // I - cyan
+  2: '#0000F0',    // J - blue
+  3: '#F0A000',    // L - orange
+  4: '#F0F000',    // O - yellow
+  5: '#00F000',    // S - green
+  6: '#A000F0',    // T - purple
+  7: '#F00000',    // Z - red
+  8: '#808080'     // garbage - gray
+};
+
+// Lighter versions for ghost pieces
+const GHOST_COLORS = {
+  1: 'rgba(0, 240, 240, 0.25)',
+  2: 'rgba(0, 0, 240, 0.25)',
+  3: 'rgba(240, 160, 0, 0.25)',
+  4: 'rgba(240, 240, 0, 0.25)',
+  5: 'rgba(0, 240, 0, 0.25)',
+  6: 'rgba(160, 0, 240, 0.25)',
+  7: 'rgba(240, 0, 0, 0.25)'
+};
+
+// Player accent colors
+const PLAYER_COLORS = [
+  '#FF6B6B', // Player 1 - red
+  '#4ECDC4', // Player 2 - teal
+  '#FFE66D', // Player 3 - yellow
+  '#A78BFA'  // Player 4 - purple
+];
+
+const PLAYER_NAMES = ['Player 1', 'Player 2', 'Player 3', 'Player 4'];
+
+// --- Theme tokens ---
+const THEME = Object.freeze({
+
+  // ---- Colors ----
+  color: Object.freeze({
+    bg: Object.freeze({
+      primary:   '#06060f',
+      board:     '#080810',
+      secondary: '#0c0c1a',
+      card:      '#12122a',
+    }),
+    text: Object.freeze({
+      primary: '#e0e0ff',
+      white:   '#ffffff',
+    }),
+    accent: Object.freeze({
+      blue:      '#4444ff',
+      cyan:      '#00ccff',
+      green:     '#00ff88',
+      greenDark: '#00dd77',
+    }),
+    danger:  '#ff4444',
+    garbage: '#3a3a4e',
+    medal: Object.freeze({
+      gold:   '#ffd700',
+      silver: '#c0c0c0',
+      bronze: '#cd7f32',
+    }),
+    ko: Object.freeze({
+      text: '#ff4444',
+      glow: 'rgba(255, 50, 50, 0.6)',
+    }),
+    // Animation-specific named colors
+    tetris:  '#00ffff',
+    triple:  '#ffaa00',
+    combo:   '#ffe66d',
+    tSpin:   '#a000f0',
+  }),
+
+  // ---- Opacities ----
+  opacity: Object.freeze({
+    faint:     0.04,  // noise textures, barely-there tints
+    tint:      0.06,  // player color surface tints
+    subtle:    0.08,  // ghost fills, inner shines, scanlines
+    muted:     0.10,  // grid lines, dot patterns
+    soft:      0.15,  // borders, soft accents
+    highlight: 0.22,  // block top highlight
+    shadow:    0.25,  // block bottom shadow
+    label:     0.5,   // panel labels, toolbar text
+    strong:    0.7,   // prominent text
+    overlay:   0.75,  // dark overlays
+    panel:     0.9,   // card/panel backgrounds
+  }),
+
+  // ---- Border Radii (functions of cell/block size) ----
+  radius: Object.freeze({
+    block: (size) => Math.min(3, size * 0.12),
+    mini:  (size) => Math.min(2, size * 0.1),
+    panel: (size) => Math.min(6, size * 0.2),
+  }),
+
+  // ---- Stroke Widths ----
+  stroke: Object.freeze({
+    grid:   0.5,
+    border: 1,
+    ghost:  1.5,
+  }),
+
+  // ---- Animation Timing (ms) ----
+  timing: Object.freeze({
+    lineClear:    600,
+    garbageShake: 180,
+    textPopup:    1200,
+    ko:           1800,
+  }),
+
+  // ---- Font Size Multipliers (× cellSize) ----
+  font: Object.freeze({
+    cellScale: Object.freeze({
+      name:  0.55,
+      label: 0.38,
+      score: 0.7,
+      timer: 0.52,
+      mini:  0.6,
+    }),
+  }),
+
+  // ---- Sizing Constants ----
+  size: Object.freeze({
+    panelWidth:  4.5,   // cellSize multiplier for panel width
+    panelGapMin: 6,     // minimum panel gap px
+    panelGap:    0.25,  // cellSize multiplier for panel gap
+    canvasPad:   5,     // canvas edge padding px
+    boardInset:  1,     // block inset from cell edge px
+  }),
+});
+
+// Export for both Node.js and browser
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { THEME, PIECE_COLORS, GHOST_COLORS, PLAYER_COLORS, PLAYER_NAMES };
+}

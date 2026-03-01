@@ -13,7 +13,7 @@ html, body {
   -webkit-user-select: none;
   -webkit-touch-callout: none;
   position: fixed;
-  background: #06060f;
+  background: var(--bg-primary);
   color: white;
   font-family: system-ui, -apple-system, sans-serif;
 }
@@ -71,7 +71,7 @@ html, body {
   font-size: clamp(1.4rem, 7vw, 2.2rem);
   font-weight: 900;
   letter-spacing: 0.08em;
-  background: linear-gradient(135deg, #4444ff, #00ccff, #00ff88);
+  background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan), var(--accent-green));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -128,7 +128,7 @@ html, body {
   gap: 12px;
   padding: 14px 28px;
   border-radius: 10px;
-  background: rgba(18, 18, 42, 0.9);
+  background: rgba(18, 18, 42, var(--opacity-panel, 0.9));
   border: 1px solid color-mix(in srgb, var(--id-color, #888) 20%, transparent);
 }
 
@@ -166,7 +166,7 @@ html, body {
 }
 
 #start-btn:not(:disabled) {
-  background: linear-gradient(180deg, #00ff88 0%, #00dd77 100%);
+  background: linear-gradient(180deg, var(--accent-green) 0%, var(--accent-green-dark) 100%);
   color: #003d1f;
   cursor: pointer;
   animation: lobbyFadeUp 0.5s 0.4s ease-out both, btnPulse 2.5s 1s ease-in-out infinite;
@@ -319,7 +319,7 @@ html, body {
 #touch-area {
   flex: 1;
   width: 100%;
-  background: #080810;
+  background: var(--bg-board);
   position: relative;
   display: flex;
   flex-direction: column;
@@ -336,7 +336,7 @@ html, body {
   max-height: 70%;
   position: relative;
   overflow: hidden;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   border: 1px solid color-mix(in srgb, var(--player-color, #888) 15%, rgba(255, 255, 255, 0.06));
   background-color: color-mix(in srgb, var(--player-color, #888) 6%, rgba(255, 255, 255, 0.02));
   background-image: radial-gradient(
@@ -502,7 +502,7 @@ html, body {
   background:
     radial-gradient(ellipse at 50% 20%, var(--winner-glow, rgba(255, 215, 0, 0.06)) 0%, transparent 60%),
     radial-gradient(ellipse at 50% 90%, rgba(68, 68, 255, 0.03) 0%, transparent 40%),
-    #06060f;
+    var(--bg-primary);
   animation: resultsScreenIn 0.4s ease-out both;
 }
 
@@ -585,9 +585,9 @@ html, body {
   letter-spacing: -0.02em;
 }
 
-.rank-1 .result-rank { color: #ffd700; }
-.rank-2 .result-rank { color: #c0c0c0; }
-.rank-3 .result-rank { color: #cd7f32; }
+.rank-1 .result-rank { color: var(--medal-gold); }
+.rank-2 .result-rank { color: var(--medal-silver); }
+.rank-3 .result-rank { color: var(--medal-bronze); }
 
 .result-info {
   flex: 1;
@@ -624,14 +624,14 @@ html, body {
   padding: 14px 28px;
   border: none;
   border-radius: 10px;
-  background: linear-gradient(180deg, #00ff88 0%, #00dd77 100%);
+  background: linear-gradient(180deg, var(--accent-green) 0%, var(--accent-green-dark) 100%);
   color: #003d1f;
   font-family: 'Orbitron', sans-serif;
   font-size: 0.9rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: var(--transition-fast);
   animation: resultsBtnIn 0.5s 0.6s ease-out both, btnPulse 2.5s 1.5s ease-in-out infinite;
 }
 
@@ -792,14 +792,14 @@ html, body {
   padding: 14px 28px;
   border: none;
   border-radius: 10px;
-  background: linear-gradient(180deg, #00ff88 0%, #00dd77 100%);
+  background: linear-gradient(180deg, var(--accent-green) 0%, var(--accent-green-dark) 100%);
   color: #003d1f;
   font-family: 'Orbitron', sans-serif;
   font-size: 0.9rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: var(--transition-fast);
 }
 
 #pause-continue-btn:active {

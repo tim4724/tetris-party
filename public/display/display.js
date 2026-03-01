@@ -16,6 +16,7 @@ let lastFrameTime = null;
 let playerIndexCounter = 0;
 let disconnectedQRs = new Map(); // playerId -> Image
 let garbageIndicatorEffects = new Map(); // playerId -> transient attacker-colored meter block overlays
+let welcomeBg = null;
 
 // --- DOM References ---
 const welcomeScreen = document.getElementById('welcome-screen');
@@ -59,6 +60,15 @@ function showScreen(name) {
     initCanvas();
     calculateLayout();
   }
+
+  // Manage welcome background animation
+  if (welcomeBg) {
+    if (name === 'welcome') {
+      welcomeBg.start();
+    } else {
+      welcomeBg.stop();
+    }
+  }
 }
 
 // --- Canvas Setup ---
@@ -89,7 +99,7 @@ function calculateLayout() {
   const n = playerOrder.length;
   const w = window.innerWidth;
   const h = window.innerHeight;
-  const padding = 5;
+  const padding = THEME.size.canvasPad;
 
   // Each player needs: board (10 cells wide, 20 tall) + side panels (~3 cells each side)
   const totalCellsWide = 10 + 3 + 3; // board + hold panel + next panel
@@ -570,7 +580,7 @@ function renderLoop(timestamp) {
   // Clear canvas — deep space background with subtle radial vignette
   const w = window.innerWidth;
   const h = window.innerHeight;
-  ctx.fillStyle = '#06060f';
+  ctx.fillStyle = THEME.color.bg.primary;
   ctx.fillRect(0, 0, w, h);
 
   // Subtle vignette (cached)
@@ -650,11 +660,11 @@ function renderLoop(timestamp) {
         const bh = 20 * br.cellSize;
 
         // Semi-transparent dark overlay
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+        ctx.fillStyle = `rgba(0, 0, 0, ${THEME.opacity.overlay})`;
         ctx.fillRect(bx, by, bw, bh);
 
         const qrImg = disconnectedQRs.get(playerData.id);
-        const labelSize = Math.max(10, br.cellSize * 0.55);
+        const labelSize = Math.max(10, br.cellSize * THEME.font.cellScale.name);
         const labelGap = labelSize * 1.2;
         const qrSize = Math.min(bw, bh) * 0.5;
         const radius = qrSize * 0.08;
@@ -728,7 +738,7 @@ function drawTimer(elapsedMs) {
   const font = _timerFontReady ? 'Orbitron' : '"Courier New", monospace';
 
   const cellSize = boardRenderers.length > 0 ? boardRenderers[0].cellSize : 24;
-  const labelSize = Math.max(12, cellSize * 0.52);
+  const labelSize = Math.max(12, cellSize * THEME.font.cellScale.timer);
   const digitAdvance = labelSize * 0.92;
   const colonAdvance = labelSize * 0.52;
   const advances = [];
@@ -741,7 +751,7 @@ function drawTimer(elapsedMs) {
   const startX = window.innerWidth / 2 - timerWidth / 2;
   const y = 14;
 
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+  ctx.fillStyle = `rgba(255, 255, 255, ${THEME.opacity.label})`;
   ctx.font = `700 ${labelSize}px ${font}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
@@ -758,7 +768,18 @@ function drawTimer(elapsedMs) {
 // --- Window Resize ---
 window.addEventListener('resize', () => {
   resizeCanvas();
+  if (welcomeBg) {
+    welcomeBg.resize(window.innerWidth, window.innerHeight);
+  }
 });
 
 // --- Initialize ---
+// Welcome background animation
+const welcomeCanvas = document.getElementById('welcome-canvas');
+if (welcomeCanvas) {
+  welcomeBg = new WelcomeBackground(welcomeCanvas);
+  welcomeBg.resize(window.innerWidth, window.innerHeight);
+  welcomeBg.start();
+}
+
 requestAnimationFrame(renderLoop);

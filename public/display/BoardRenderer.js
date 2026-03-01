@@ -24,19 +24,19 @@ class BoardRenderer {
     // 1. Board background — player-color tinted (matches controller touch pad)
     const rgb = this._hexToRgb(this.accentColor);
     // Base dark background
-    ctx.fillStyle = '#080810';
+    ctx.fillStyle = THEME.color.bg.board;
     ctx.fillRect(this.x, this.y, this.boardWidth, this.boardHeight);
-    // Player color tint at 6% opacity
+    // Player color tint
     if (rgb) {
-      ctx.fillStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.06)`;
+      ctx.fillStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${THEME.opacity.tint})`;
       ctx.fillRect(this.x, this.y, this.boardWidth, this.boardHeight);
     }
 
     // 2. Grid lines
     ctx.strokeStyle = rgb
-      ? `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.10)`
-      : 'rgba(255, 255, 255, 0.08)';
-    ctx.lineWidth = 0.5;
+      ? `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${THEME.opacity.muted})`
+      : `rgba(255, 255, 255, ${THEME.opacity.subtle})`;
+    ctx.lineWidth = THEME.stroke.grid;
     for (let r = 1; r < VISIBLE_ROWS; r++) {
       const py = this.y + r * this.cellSize;
       ctx.beginPath();
@@ -122,11 +122,11 @@ class BoardRenderer {
   _drawBoardBorder() {
     const ctx = this.ctx;
     const rgb = this._hexToRgb(this.accentColor);
-    // Subtle player-color border (matches controller touch pad: 15% color mix)
+    // Subtle player-color border (matches controller touch pad)
     ctx.strokeStyle = rgb
-      ? `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.15)`
-      : 'rgba(255, 255, 255, 0.06)';
-    ctx.lineWidth = 1;
+      ? `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${THEME.opacity.soft})`
+      : `rgba(255, 255, 255, ${THEME.opacity.tint})`;
+    ctx.lineWidth = THEME.stroke.border;
     ctx.strokeRect(this.x - 0.5, this.y - 0.5, this.boardWidth + 1, this.boardHeight + 1);
   }
 
@@ -135,16 +135,16 @@ class BoardRenderer {
     const x = this.x + col * this.cellSize;
     const y = this.y + row * this.cellSize;
     const size = this.cellSize;
-    const inset = 1;
-    const r = Math.min(3, size * 0.12); // subtle rounded corners
+    const inset = THEME.size.boardInset;
+    const r = THEME.radius.block(size);
 
     if (isGarbage) {
       // Garbage blocks — flat muted style
-      ctx.fillStyle = '#3a3a4e';
+      ctx.fillStyle = THEME.color.garbage;
       this._roundRect(x + inset, y + inset, size - inset * 2, size - inset * 2, r);
       ctx.fill();
       // Subtle noise texture
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
+      ctx.fillStyle = `rgba(255, 255, 255, ${THEME.opacity.faint})`;
       ctx.fillRect(x + inset + 1, y + inset + 1, size - inset * 2 - 2, 1);
       return;
     }
@@ -164,19 +164,19 @@ class BoardRenderer {
     ctx.fill();
 
     // Top highlight
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.22)';
+    ctx.fillStyle = `rgba(255, 255, 255, ${THEME.opacity.highlight})`;
     ctx.fillRect(inset + r, inset, size - inset * 2 - r * 2, Math.max(1.5, size * 0.08));
 
     // Left highlight
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+    ctx.fillStyle = `rgba(255, 255, 255, ${THEME.opacity.muted})`;
     ctx.fillRect(inset, inset + r, Math.max(1.5, size * 0.07), size - inset * 2 - r * 2);
 
     // Bottom shadow
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+    ctx.fillStyle = `rgba(0, 0, 0, ${THEME.opacity.shadow})`;
     ctx.fillRect(inset + r, size - inset - Math.max(1.5, size * 0.08), size - inset * 2 - r * 2, Math.max(1.5, size * 0.08));
 
     // Inner shine spot
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+    ctx.fillStyle = `rgba(255, 255, 255, ${THEME.opacity.subtle})`;
     const shineSize = size * 0.25;
     ctx.fillRect(size * 0.25, size * 0.2, shineSize, shineSize * 0.5);
 
@@ -192,7 +192,7 @@ class BoardRenderer {
 
     // Dotted outline style ghost
     ctx.strokeStyle = color;
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = THEME.stroke.ghost;
     ctx.setLineDash([3, 3]);
     ctx.strokeRect(x + inset, y + inset, size - inset * 2, size - inset * 2);
     ctx.setLineDash([]);

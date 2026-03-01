@@ -18,7 +18,7 @@ class Animations {
   addLineClear(boardX, boardY, cellSize, rows, isTetris, isTSpin) {
     if (!Array.isArray(rows) || rows.length === 0) return;
 
-    const duration = 600;
+    const duration = THEME.timing.lineClear;
     const boardWidth = 10 * cellSize;
 
     // Main line clear effect
@@ -86,7 +86,7 @@ class Animations {
         this._addSparkle(
           boardX + Math.random() * boardWidth,
           boardY + row * cellSize + Math.random() * cellSize,
-          isTetris ? '#00ffff' : '#ffffff',
+          isTetris ? THEME.color.tetris : THEME.color.text.white,
           400 + Math.random() * 400
         );
       }
@@ -98,14 +98,14 @@ class Animations {
       const cx = boardX + 5 * cellSize;
       const cy = boardY + firstRow * cellSize;
       if (isTetris) {
-        this.addTextPopup(cx, cy, 'TETRIS!', '#00ffff', true);
+        this.addTextPopup(cx, cy, 'TETRIS!', THEME.color.tetris, true);
       } else if (rows.length === 3) {
-        this.addTextPopup(cx, cy, 'TRIPLE!', '#ffaa00', true);
+        this.addTextPopup(cx, cy, 'TRIPLE!', THEME.color.triple, true);
       } else if (rows.length === 2) {
-        this.addTextPopup(cx, cy, 'DOUBLE', '#ffffff', false);
+        this.addTextPopup(cx, cy, 'DOUBLE', THEME.color.text.white, false);
       }
       if (isTSpin) {
-        this.addTextPopup(cx, cy - cellSize, 'T-SPIN!', '#a000f0', true);
+        this.addTextPopup(cx, cy - cellSize, 'T-SPIN!', THEME.color.tSpin, true);
       }
     }
   }
@@ -137,7 +137,7 @@ class Animations {
   }
 
   addGarbageShake(boardX, boardY) {
-    const duration = 180;
+    const duration = THEME.timing.garbageShake;
     this.active.push({
       type: 'shake',
       startTime: performance.now(),
@@ -160,7 +160,7 @@ class Animations {
 
   addTextPopup(x, y, text, color, hasGlow) {
     this._checkFont();
-    const duration = 1200;
+    const duration = THEME.timing.textPopup;
     const font = this._labelFont;
 
     this.active.push({
@@ -209,7 +209,7 @@ class Animations {
   }
 
   addKO(boardX, boardY, boardWidth, boardHeight) {
-    const duration = 1800;
+    const duration = THEME.timing.ko;
 
     // Red flash
     this.active.push({
@@ -240,7 +240,7 @@ class Animations {
       this._addSparkle(
         boardX + Math.random() * boardWidth,
         boardY + Math.random() * boardHeight,
-        '#ff4444',
+        THEME.color.ko.text,
         600 + Math.random() * 400
       );
     }
@@ -249,7 +249,7 @@ class Animations {
   addCombo(x, y, combo) {
     if (combo >= 2) {
       this._checkFont();
-      this.addTextPopup(x, y, `${combo} COMBO!`, '#ffe66d', true);
+      this.addTextPopup(x, y, `${combo} COMBO!`, THEME.color.combo, true);
     }
   }
 
