@@ -286,7 +286,16 @@
         onGameStart();
         break;
       case MSG.COUNTDOWN:
-        // Countdown is shown on display only; controller ignores it
+        // No overlay — just ensure we're on the game screen during countdown
+        if (currentScreen !== 'game') {
+          gameScreen.classList.remove('dead');
+          gameScreen.classList.remove('paused');
+          gameScreen.style.setProperty('--player-color', playerColor);
+          pauseOverlay.classList.add('hidden');
+          pauseBtn.classList.toggle('hidden', !isHost);
+          hideLobbyElements();
+          showScreen('game');
+        }
         break;
       case MSG.PLAYER_STATE:
         onPlayerState(data);
