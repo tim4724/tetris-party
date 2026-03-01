@@ -49,23 +49,17 @@ async function setupLobbyState(page, { isHost, playerColor, playerName, playerCo
 }
 
 // Helper: set up the game screen via DOM manipulation
-async function setupGameState(page, { playerColor, playerName, score, level, lines, isHost }) {
-  await page.evaluate(({ playerColor, playerName, score, level, lines, isHost }) => {
+async function setupGameState(page, { playerColor, playerName, isHost }) {
+  await page.evaluate(({ playerColor, playerName, isHost }) => {
     // Switch screens
     document.getElementById('waiting-screen').classList.add('hidden');
     document.getElementById('game-screen').classList.remove('hidden');
     document.getElementById('gameover-screen').classList.add('hidden');
 
-    // Status bar data
     const gameScreen = document.getElementById('game-screen');
     gameScreen.style.setProperty('--player-color', playerColor);
     gameScreen.classList.remove('dead', 'paused');
     document.getElementById('player-name').textContent = playerName;
-    document.getElementById('player-indicator').style.background = playerColor;
-    document.getElementById('score-display').textContent = score.toLocaleString();
-    document.getElementById('level-display').textContent = `LVL ${level}`;
-    document.getElementById('lines-display').textContent = `${lines} lines`;
-    document.getElementById('lines-progress-fill').style.width = `${(lines % 10) / 10 * 100}%`;
 
     // Pause button (host only)
     document.getElementById('pause-btn').classList.toggle('hidden', !isHost);
@@ -74,7 +68,7 @@ async function setupGameState(page, { playerColor, playerName, score, level, lin
     document.getElementById('pause-overlay').classList.add('hidden');
     const ko = document.getElementById('ko-overlay');
     if (ko) ko.remove();
-  }, { playerColor, playerName, score, level, lines, isHost });
+  }, { playerColor, playerName, isHost });
 }
 
 // Helper: set up results screen
@@ -190,9 +184,6 @@ test.describe('Controller', () => {
     await setupGameState(page, {
       playerColor: '#FF6B6B',
       playerName: 'Player 1',
-      score: 12450,
-      level: 3,
-      lines: 24,
       isHost: true,
     });
     await page.waitForTimeout(100);
@@ -206,9 +197,6 @@ test.describe('Controller', () => {
     await setupGameState(page, {
       playerColor: '#4ECDC4',
       playerName: 'Player 2',
-      score: 8320,
-      level: 2,
-      lines: 16,
       isHost: false,
     });
     await page.waitForTimeout(100);
@@ -222,9 +210,6 @@ test.describe('Controller', () => {
     await setupGameState(page, {
       playerColor: '#FF6B6B',
       playerName: 'Player 1',
-      score: 12450,
-      level: 3,
-      lines: 24,
       isHost: true,
     });
 
@@ -247,9 +232,6 @@ test.describe('Controller', () => {
     await setupGameState(page, {
       playerColor: '#4ECDC4',
       playerName: 'Player 2',
-      score: 8320,
-      level: 2,
-      lines: 16,
       isHost: false,
     });
 
@@ -270,9 +252,6 @@ test.describe('Controller', () => {
     await setupGameState(page, {
       playerColor: '#FF6B6B',
       playerName: 'Player 1',
-      score: 12450,
-      level: 3,
-      lines: 24,
       isHost: false,
     });
 
