@@ -73,3 +73,30 @@ describe('Randomizer - bag fairness', () => {
     }
   });
 });
+
+describe('Randomizer - seeded determinism', () => {
+  test('two randomizers with same seed produce identical sequences', () => {
+    const a = new Randomizer(42);
+    const b = new Randomizer(42);
+    for (let i = 0; i < 70; i++) {
+      assert.strictEqual(a.next(), b.next(), `Piece ${i + 1} should match`);
+    }
+  });
+
+  test('different seeds produce different sequences', () => {
+    const a = new Randomizer(1);
+    const b = new Randomizer(2);
+    const seqA = Array.from({ length: 14 }, () => a.next());
+    const seqB = Array.from({ length: 14 }, () => b.next());
+    assert.notDeepStrictEqual(seqA, seqB);
+  });
+
+  test('seeded randomizer still produces valid bags', () => {
+    const randomizer = new Randomizer(12345);
+    for (let bag = 0; bag < 5; bag++) {
+      const pieces = drawBag(randomizer);
+      const sorted = [...pieces].sort();
+      assert.deepStrictEqual(sorted, [...ALL_TYPES].sort(), `Seeded bag ${bag + 1} should be a full set`);
+    }
+  });
+});

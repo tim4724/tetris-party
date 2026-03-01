@@ -13,7 +13,7 @@ const { Scoring } = require('./Scoring');
 const NEXT_QUEUE_SIZE = 6;
 
 class PlayerBoard {
-  constructor(playerId) {
+  constructor(playerId, seed) {
     this.playerId = playerId;
     // 10 wide x 24 tall grid (0=empty, 1-7=piece type, 8=garbage)
     this.grid = Array.from({ length: BOARD_HEIGHT }, () => new Array(BOARD_WIDTH).fill(0));
@@ -22,7 +22,7 @@ class PlayerBoard {
     this.holdUsed = false;
     this.nextPieces = [];
     this.scoring = new Scoring();
-    this.randomizer = new Randomizer();
+    this.randomizer = new Randomizer(seed);
     this.alive = true;
     this.lockTimer = null;
     this.lockResets = 0;

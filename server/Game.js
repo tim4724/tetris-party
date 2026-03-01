@@ -16,8 +16,11 @@ class Game {
     this.paused = false;
     this.pausedAt = null;
 
+    // Shared seed so all players get the same piece sequence
+    const seed = (Math.random() * 0xFFFFFFFF) >>> 0;
+
     for (const [id] of players) {
-      const board = new PlayerBoard(id);
+      const board = new PlayerBoard(id, seed);
       this.boards.set(id, board);
       this.playerIds.push(id);
     }

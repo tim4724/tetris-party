@@ -2,8 +2,24 @@
 
 const { PIECE_TYPES } = require('./constants');
 
+// Mulberry32: simple, fast 32-bit seeded PRNG
+function mulberry32(seed) {
+  let s = seed | 0;
+  return function() {
+    s = (s + 0x6D2B79F5) | 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
 class Randomizer {
-  constructor() {
+  constructor(seed) {
+    if (seed != null) {
+      this.rng = mulberry32(seed);
+    } else {
+      this.rng = Math.random;
+    }
     this.bag = [];
   }
 
@@ -12,7 +28,7 @@ class Randomizer {
       this.bag = [...PIECE_TYPES];
       // Fisher-Yates shuffle
       for (let i = this.bag.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
+        const j = Math.floor(this.rng() * (i + 1));
         [this.bag[i], this.bag[j]] = [this.bag[j], this.bag[i]];
       }
     }
